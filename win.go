@@ -239,51 +239,59 @@ func (w *win) typing(q0, q1 int) {
 			log.Printf("pAddr=%d, eAddr=%d, text [%s]\n",
 				w.pAddr, w.eAddr, t)
 		}
-
 		w.Addr("#%d,#%d", w.pAddr, w.eAddr+utf8.RuneCountInString(t))
-		if strings.HasPrefix(t, meCmd) {
-			act := strings.TrimLeft(t[len(meCmd):], " \t")
-			act = strings.TrimRight(act, "\n")
-			if act == "\n" {
-				t = "\n"
-			} else {
-				t = actionPrefix + " " + act + "\x01"
-			}
-		}
-
-		msg := ""
-		if w == serverWin {
-			if msg = t; msg == "\n" {
-				msg = ""
-			}
-		} else {
-			msg = w.privMsgString(*nick, t)
-
-			// Always tack on a newline.
-			// In the case of a /me command, the
-			// newline will be missing, it is added
-			// here.
-			if len(msg) > 0 && msg[len(msg)-1] != '\n' {
-				msg = msg + "\n"
-			}
-		}
-		w.writeData([]byte(msg + prompt))
-
-		w.pAddr += utf8.RuneCountInString(msg)
-		w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
+		w.send(t)
 		text = text[i+1:]
+	}
+	w.Addr("#%d", w.pAddr)
+}
 
-		if t == "\n" {
-			continue
-		}
-		if w == serverWin {
-			sendRawMsg(t)
+// send sends the given text.
+func (w *win) send(t string) {
+	if len(t) > 0 && t[len(t)-1] != '\n' {
+		t = t + "\n"
+	}
+	if strings.HasPrefix(t, meCmd) {
+		act := strings.TrimLeft(t[len(meCmd):], " \t")
+		act = strings.TrimRight(act, "\n")
+		if act == "\n" {
+			t = "\n"
 		} else {
-			// BUG(eaburns): Long PRIVMSGs should be broken up and sent in pieces.
-			client.Out <- irc.Msg{
-				Cmd:  "PRIVMSG",
-				Args: []string{w.target, t},
-			}
+			t = actionPrefix + " " + act + "\x01"
+		}
+	}
+
+	msg := ""
+	if w == serverWin {
+		if msg = t; msg == "\n" {
+			msg = ""
+		}
+	} else {
+		msg = w.privMsgString(*nick, t)
+
+		// Always tack on a newline.
+		// In the case of a /me command, the
+		// newline will be missing, it is added
+		// here.
+		if len(msg) > 0 && msg[len(msg)-1] != '\n' {
+			msg = msg + "\n"
+		}
+	}
+	w.writeData([]byte(msg + prompt))
+
+	w.pAddr += utf8.RuneCountInString(msg)
+	w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
+
+	if t == "\n" {
+		return
+	}
+	if w == serverWin {
+		sendRawMsg(t)
+	} else {
+		// BUG(eaburns): Long PRIVMSGs should be broken up and sent in pieces.
+		client.Out <- irc.Msg{
+			Cmd:  "PRIVMSG",
+			Args: []string{w.target, t},
 		}
 	}
 	w.Addr("#%d", w.pAddr)
