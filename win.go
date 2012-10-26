@@ -215,6 +215,7 @@ func (w *win) typing(q0, q1 int) {
 
 	w.Addr("#%d", w.eAddr)
 	text, err := w.ReadAll("data")
+	
 	if err != nil {
 		panic("Failed to read from window: " + err.Error())
 	}
@@ -303,6 +304,8 @@ func sendRawMsg(str string) {
 // Deleting moves the addresses around when
 // text is deleted from the window.
 func (w *win) deleting(q0, q1 int) {
+	p := w.pAddr
+
 	if q0 >= w.eAddr { // Deleting entirely after the entry point.
 		return
 	}
@@ -318,7 +321,7 @@ func (w *win) deleting(q0, q1 int) {
 			w.pAddr -= q1 - q0
 		}
 	}
-	if q1 < w.pAddr {	// Deleting entirely before the prompt
+	if q1 <= p {	// Deleted entirely before the prompt
 		return
 	}
 
