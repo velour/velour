@@ -8,6 +8,7 @@ import (
 	"net"
 	"log"
 	"os"
+	osuser "os/user"
 	"sort"
 	"strings"
 	"time"
@@ -34,8 +35,8 @@ const (
 )
 
 var (
-	nick  = flag.String("n", os.Getenv("USER"), "nick name")
-	full  = flag.String("f", os.Getenv("USER"), "full name")
+	nick  = flag.String("n", username(), "nick name")
+	full  = flag.String("f", name(), "full name")
 	pass  = flag.String("p", "", "password")
 	debug = flag.Bool("d", false, "debugging")
 )
@@ -517,4 +518,20 @@ func exit(status int, why string) {
 		w.Ctl("clean")
 	}
 	os.Exit(status)
+}
+
+func username() string {
+	un, err := osuser.Current()
+	if err != nil {
+		return ""
+	}
+	return un.Username
+}
+
+func name() string {
+	un, err := osuser.Current()
+	if err != nil {
+		return ""
+	}
+	return un.Name
 }
