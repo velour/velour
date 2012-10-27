@@ -244,9 +244,6 @@ func handleWindowEvent(ev winEvent) {
 		if len(fs) > 0 && handleExecute(ev, fs[0], fs[1:]) {
 			return
 		}
-		if ev.Flag & 1 == 0 {	// not recognized
-			return
-		}
 		if ev.Flag & 2 != 0 {
 			ev.Q0 = ev.OrigQ0
 			ev.Q1 = ev.OrigQ1
