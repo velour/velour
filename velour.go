@@ -190,6 +190,11 @@ func handleConnection() {
 			w.lastSpeaker = ""
 			w.Ctl("clean")
 		}
+		for err := range client.Errors {
+			if err != io.EOF {
+				exit(1, err.Error())
+			}
+		}
 	}()
 
 	for {
