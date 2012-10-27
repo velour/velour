@@ -5,6 +5,7 @@ package irc
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -71,7 +72,7 @@ func (m Msg) RawString() (string, error) {
 	}
 out:
 	if len(raw) > MaxMsgLength - len(MsgMarker) {
-		return "", errors.New("message is too long")
+		return "", fmt.Errorf("message is too long (%d bytes)", len(raw))
 	}
 	return raw, nil
 }
@@ -110,6 +111,13 @@ func ParseMsg(data string) (Msg, error) {
 func readMsg(in *bufio.Reader) (Msg, error) {
 	data, err := readMsgData(in)
 	if err != nil {
+		if long, ok := err.(MsgTooLong); ok {
+			m, err := ParseMsg(long.Msg)
+			if err != nil {
+				return Msg{}, err
+			}
+			return m, long
+		}
 		return Msg{}, err
 	}
 	return ParseMsg(data)
@@ -147,6 +155,17 @@ const MaxMsgLength = 512
 // in the TCP stream.
 const MsgMarker = "\r\n"
 
+type MsgTooLong struct {
+	// Msg is the truncated message text.
+	Msg string
+	// NTrunc is the number of truncated bytes.
+	NTrunc int
+}
+
+func (m MsgTooLong) Error() string {
+	return fmt.Sprintf("Message is too long (%d bytes truncated): %s", m.NTrunc, m.Msg)
+}
+
 // readMsgData returns the raw data for the
 // next message from the stream.  On error the
 // returned string will be empty.
@@ -183,13 +202,37 @@ func readMsgData(in *bufio.Reader) (string, error) {
 			return string(msg), nil
 
 		case len(msg) >= MaxMsgLength-2:
-			return "", errors.New("message is too long: prefix=["+string(msg)+"]")
+			n, err := junk(in)
+			if err != nil {
+				return "", err
+			}
+			return "", MsgTooLong{ Msg: string(msg[:len(msg)-1]), NTrunc: n+1 }
 
 		default:
 			msg = append(msg, c)
 		}
 	}
 	panic("impossible")
+}
+
+// Junk reads and discards bytes until the next
+// message marker is found, returning the number
+// of discarded non-marker bytes.
+func junk(in *bufio.Reader) (int, error) {
+	var last byte
+	n := 0
+	for {
+		c, err := in.ReadByte()
+		if err != nil {
+			return n, err
+		}
+		n++
+		if last == MsgMarker[0] && c == MsgMarker[1] {
+			break
+		}
+		last = c
+	}
+	return n-1, nil
 }
 
 // unexpected returns an error that describes

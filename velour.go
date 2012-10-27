@@ -191,9 +191,7 @@ func handleConnection() {
 			w.Ctl("clean")
 		}
 		for err := range client.Errors {
-			if err != io.EOF {
-				exit(1, err.Error())
-			}
+			handleError(err)
 		}
 	}()
 
@@ -215,11 +213,22 @@ func handleConnection() {
 			t = time.NewTimer(pingTime)
 
 		case err, ok := <-client.Errors:
-			if ok && err != io.EOF {
-				exit(1, err.Error())
+			if ok {
+				handleError(err)
 			}
 		}
 	}
+}
+
+func handleError(err error) {
+	if err == io.EOF {
+		return
+	}
+	if l, ok := err.(irc.MsgTooLong); ok {
+		log.Println(l.Error())
+		return
+	}
+	exit(1, err.Error())
 }
 
 // HandleWindowEvent handles events from

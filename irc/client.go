@@ -102,7 +102,9 @@ func (c *Client) readMsgs(errs chan<- error, ms chan<- Msg) {
 		m, err := readMsg(in)
 		if err != nil {
 			errs <- err
-			break
+			if _, ok := err.(MsgTooLong); !ok {
+				break
+			}
 		}
 		ms <- m
 	}
