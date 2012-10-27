@@ -223,11 +223,22 @@ func (w *win) typing(q0, q1 int) {
 		return
 	}
 
+	defer w.Addr("#%d", w.pAddr)
+
 	w.Addr("#%d", w.eAddr)
-	text, err := w.ReadAll("data")
-	
+	text, err := w.readNRunes(q1 - w.eAddr)
 	if err != nil {
 		panic("Failed to read from window: " + err.Error())
+	}
+	// If the last character in this send isn't a newline then
+	// wait.  This fixes a bug where Send sends two typing
+	// events, the sent text and a new line.  The text won't
+	// be issued to w.send() until the final newline is received.
+	// Otherwise the first insert event messes up the
+	// addresses and the subsequent event (with the newline)
+	// appears to have inserted a newline before pAddr.
+	if r, _ := utf8.DecodeLastRune(text); r != '\n' {
+		return
 	}
 	for {
 		i := bytes.IndexRune(text, '\n')
@@ -240,7 +251,23 @@ func (w *win) typing(q0, q1 int) {
 		w.send(t)
 		text = text[i+1:]
 	}
-	w.Addr("#%d", w.pAddr)
+}
+
+// readNRunes reads the given number of runes
+// from the data file of the window.
+func (w *win) readNRunes(n int) ([]byte, error) {
+	text, err := w.ReadAll("data")
+	if err != nil {
+		return nil, err
+	}
+	s := make([]byte, 0, n)
+	for n > 0 && len(text) > 0 {
+		_, sz := utf8.DecodeRune(text)
+		s = append(s, text[:sz]...)
+		text = text[sz:]
+		n--
+	}
+	return s, nil
 }
 
 // send sends the given text.

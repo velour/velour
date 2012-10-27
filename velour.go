@@ -299,21 +299,6 @@ func handleExecute(ev winEvent, cmd string, args []string) bool {
 		ev.win.who = []string{}
 		client.Out <- irc.Msg{Cmd: irc.WHO, Args: []string{ev.target}}
 
-	case "Send":
-		// Don't allow acme to handle send beause it sends
-		// text in two inserts: the text, then the newline.  The
-		// second insert messes everything up because it
-		// uses addresses that are invalid after the window
-		// is changed by the first insert.
-		//
-		// As far as I can tell there is no way to read the Snarf
-		// buffer so we can only implement Send with chorded
-		// arguments.
-		if ev.Flag & 8 != 0 {	// chorded argument
-			ev.Addr("#%d,#%d", ev.pAddr, ev.eAddr)
-			ev.send(string(ev.Arg))
-		}
-
 	default:
 		return false
 	}
