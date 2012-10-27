@@ -28,14 +28,6 @@ const (
 	// PingTime is the amount of inactivity time
 	// before sending a ping to the server.
 	pingTime = 120*time.Second
-
-	// Prompt is the prompt string written at the
-	// beginning of the text entry line.
-	prompt = "\n>"
-
-	// MeCmd is the command prefix for sending
-	// CTCP ACTIONs to a channel.
-	meCmd = "/me"
 )
 
 var (
