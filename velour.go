@@ -63,7 +63,7 @@ var (
 
 func main() {
 	flag.Usage = func() {
-		os.Stdout.WriteString("usage: 9irc [options] <server>[:<port>]\n")
+		os.Stdout.WriteString("usage: velour [options] <server>[:<port>]\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
