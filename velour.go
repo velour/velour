@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 const (
@@ -240,7 +241,17 @@ func handleWindowEvent(ev winEvent) {
 
 	switch {
 	case ev.C2 == 'x' || ev.C2 == 'X':
-		fs := strings.Fields(string(ev.Text))
+		text := strings.TrimSpace(string(ev.Text))
+		if users[text] != nil {
+			name := text + ", "
+			ev.Addr("#%d", ev.eAddr)
+			ev.writeData([]byte(name))
+			ev.Addr("#%d", ev.eAddr + utf8.RuneCountInString(name))
+			ev.Ctl("dot=addr")
+			ev.Addr("#%d", ev.pAddr)
+			return
+		}
+		fs := strings.Fields(text)
 		if len(fs) > 0 && handleExecute(ev, fs[0], fs[1:]) {
 			return
 		}
