@@ -12,7 +12,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 const (
@@ -243,12 +242,7 @@ func handleWindowEvent(ev winEvent) {
 	case ev.C2 == 'x' || ev.C2 == 'X':
 		text := strings.TrimSpace(string(ev.Text))
 		if users[text] != nil {
-			name := text + ", "
-			ev.Addr("#%d", ev.eAddr)
-			ev.writeData([]byte(name))
-			ev.Addr("#%d", ev.eAddr + utf8.RuneCountInString(name))
-			ev.Ctl("dot=addr")
-			ev.Addr("#%d", ev.pAddr)
+			ev.writeToPrompt(text + ", ")
 			return
 		}
 		fs := strings.Fields(text)

@@ -351,6 +351,14 @@ func (w *win) del() {
 	w.Ctl("delete")
 }
 
+func (w *win) writeToPrompt(text string) {
+	w.Addr("#%d", w.eAddr)
+	w.writeData([]byte(text))
+	w.Addr("#%d", w.eAddr + utf8.RuneCountInString(text))
+	w.Ctl("dot=addr")
+	w.Addr("#%d", w.pAddr)
+}
+
 // User has information on a single user.
 type user struct {
 	// nick is the user's current nick name.
