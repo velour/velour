@@ -38,6 +38,7 @@ var (
 	pass  = flag.String("p", "", "password")
 	debug = flag.Bool("d", false, "debugging")
 	util = flag.String("u", "", "utility program")
+	filter = flag.String("x", "", "filter program")
 )
 
 var (
@@ -490,6 +491,17 @@ func doQuit(who, txt string) {
 func doPrivMsg(ch, who, text string) {
 	if ch == *nick {
 		ch = who
+	}
+
+	if *filter != "" {
+		cmd := exec.Command(*util)
+		cmd.Stdin = strings.NewReader(text)
+		o, err := cmd.Output()
+		if err != nil {
+			log.Printf("Error running filter (%s): %v\n", *filter, err)
+		}
+
+		text = string(o)
 	}
 
 	if *util != "" {
