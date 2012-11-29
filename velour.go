@@ -3,6 +3,8 @@ package main
 
 import (
 	"code.google.com/p/velour/irc"
+
+	"os/exec"
 	"flag"
 	"io"
 	"net"
@@ -35,6 +37,7 @@ var (
 	full  = flag.String("f", name(), "full name")
 	pass  = flag.String("p", "", "password")
 	debug = flag.Bool("d", false, "debugging")
+	util = flag.String("u", "", "utility program")
 )
 
 var (
@@ -488,6 +491,15 @@ func doPrivMsg(ch, who, text string) {
 	if ch == *nick {
 		ch = who
 	}
+
+	if *util != "" {
+		cmd := exec.Command(*util)
+		cmd.Stdin = strings.NewReader(text)
+		if err := cmd.Run(); err != nil {
+			log.Printf("Error running util (%s): %v\n", *util, err)
+		}
+	}
+
 	getWindow(ch).writePrivMsg(who, text)
 }
 
