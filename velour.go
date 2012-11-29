@@ -241,8 +241,8 @@ func handleWindowEvent(ev winEvent) {
 	switch {
 	case ev.C2 == 'x' || ev.C2 == 'X':
 		text := strings.TrimSpace(string(ev.Text))
-		if users[text] != nil {
-			ev.writeToPrompt(text + ", ")
+		if name, ok := extractName(text); ok {
+			ev.writeToPrompt(name + ", ")
 			return
 		}
 		fs := strings.Fields(text)
@@ -273,6 +273,19 @@ func handleWindowEvent(ev winEvent) {
 		}
 		ev.WriteEvent(ev.Event)
 	}
+}
+
+// extractName returns the name and true if the text is a user's name,
+// in either "raw" or <name> format.
+func extractName(text string) (string, bool) {
+	if len(text) == 0 {
+		return "", false
+	}
+	name := text
+	if text[0] == '<' && text[len(text)-1] == '>' {
+		name = text[1:len(text)-1]
+	}
+	return name, users[name] != nil
 }
 
 // HandleExecute handles acme execte commands.
@@ -564,3 +577,4 @@ func name() string {
 	}
 	return un.Name
 }
+
