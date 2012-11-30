@@ -253,11 +253,7 @@ func handleWindowEvent(ev winEvent) {
 		if len(fs) > 0 && handleExecute(ev, fs[0], fs[1:]) {
 			return
 		}
-		if ev.Flag & 2 != 0 {
-			ev.Q0 = ev.OrigQ0
-			ev.Q1 = ev.OrigQ1
-		}
-		ev.WriteEvent(ev.Event)
+		ev.writeToPrompt(text)
 
 	case (ev.C1 == 'M' || ev.C1 == 'K') && ev.C2 == 'I':
 		ev.typing(ev.Q0, ev.Q1)
