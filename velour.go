@@ -328,6 +328,13 @@ func handleExecute(ev winEvent, cmd string, args []string) bool {
 		ev.win.who = []string{}
 		client.Out <- irc.Msg{Cmd: irc.WHO, Args: []string{ev.target}}
 
+	case "Send":
+		if ev.Flag & 2 != 0 {
+			ev.Q0 = ev.OrigQ0
+			ev.Q1 = ev.OrigQ1
+		}
+		ev.WriteEvent(ev.Event)
+
 	default:
 		return false
 	}
