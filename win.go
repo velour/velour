@@ -230,6 +230,10 @@ func (w *win) typing(q0, q1 int) {
 	if err != nil {
 		panic("Failed to read from window: " + err.Error())
 	}
+
+	if *debug {
+		log.Printf("entry text=[%s]\n\n", text)
+	}
 	// If the last character after the prompt isn't a newline then
 	// wait.  This fixes a bug where Send sends two typing
 	// events, the sent text and a new line.  The text won't

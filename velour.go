@@ -239,7 +239,7 @@ func handleError(err error) {
 // any of the acme wins.
 func handleWindowEvent(ev winEvent) {
 	if *debug {
-		log.Printf("%#v\n\n", *ev.Event)
+		log.Printf("%#v\nText=[%s]\n\n", *ev.Event, string(ev.Text))
 	}
 
 	switch {
@@ -342,7 +342,17 @@ func handleExecute(ev winEvent, cmd string, args []string) bool {
 // HandleMsg handles IRC messages from the server.
 func handleMsg(msg irc.Msg) {
 	if *debug {
-		log.Printf("%#v\n\n", msg)
+		log.Printf("%#v\n", msg)
+
+		for k, w := range wins {
+			w.Addr("#%d", w.eAddr)
+			text, err := w.ReadAll("data")
+			if err != nil {
+				panic(err)
+			}
+			log.Printf("%s entry text=[%s]\n\n", k, text)
+			w.Addr("#%d", w.pAddr)
+		}
 	}
 
 	switch msg.Cmd {
