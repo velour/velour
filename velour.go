@@ -253,6 +253,14 @@ func handleWindowEvent(ev winEvent) {
 		if len(fs) > 0 && handleExecute(ev, fs[0], fs[1:]) {
 			return
 		}
+		if ev.Flag & 1 != 0 {	// acme recognized built-in command
+			if ev.Flag & 2 != 0 {
+				ev.Q0 = ev.OrigQ0
+				ev.Q1 = ev.OrigQ1
+			}
+			ev.WriteEvent(ev.Event)
+			return
+		}
 		ev.writeToPrompt(text)
 
 	case (ev.C1 == 'M' || ev.C1 == 'K') && ev.C2 == 'I':
@@ -327,13 +335,6 @@ func handleExecute(ev winEvent, cmd string, args []string) bool {
 		}
 		ev.win.who = []string{}
 		client.Out <- irc.Msg{Cmd: irc.WHO, Args: []string{ev.target}}
-
-	case "Send":
-		if ev.Flag & 2 != 0 {
-			ev.Q0 = ev.OrigQ0
-			ev.Q1 = ev.OrigQ1
-		}
-		ev.WriteEvent(ev.Event)
 
 	default:
 		return false
