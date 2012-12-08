@@ -446,7 +446,14 @@ func doNamReply(ch string, names string) {
 }
 
 func doKick(ch, op, who string) {
-	getWindow(ch).writeMsg("=" + op + " kicked " + who)
+	w := getWindow(ch)
+	w.writeMsg("=" + op + " kicked " + who)
+	delete(w.users, who)
+	u := getUser(who)
+	u.nChans--
+	if u.nChans == 0 {
+		delete(users, who)
+	}
 }
 
 func doTopic(ch, who, what string) {
