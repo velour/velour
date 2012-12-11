@@ -169,7 +169,12 @@ func (w *win) privMsgString(who, text string) string {
 // to this window was from the same sender within
 // a specified time.
 func (w *win) writePrivMsg(who, text string) {
-	w.WriteString(w.privMsgString(who, text))
+	s := w.privMsgString(who, text)
+	if *debug {
+		log.Printf("msg string=[%s]\nnum runes=%d\n", s,
+			utf8.RuneCountInString(s))
+	}
+	w.WriteString(s)
 }
 
 // WriteMsg writes non-private message text to
@@ -232,7 +237,8 @@ func (w *win) typing(q0, q1 int) {
 	}
 
 	if *debug {
-		log.Printf("entry text=[%s]\n\n", text)
+		log.Printf("typing:\n\t[%s]\n\tpAddr=%d\n\teAddr=%d\n\n",
+			text, w.pAddr, w.eAddr)
 	}
 	// If the last character after the prompt isn't a newline then
 	// wait.  This fixes a bug where Send sends two typing
@@ -286,12 +292,17 @@ func (w *win) send(t string) {
 		// here.
 		if len(msg) > 0 && msg[len(msg)-1] != '\n' {
 			msg = msg + "\n"
-		}
+		}	
 	}
 	w.writeData([]byte(msg + prompt))
 
 	w.pAddr += utf8.RuneCountInString(msg)
 	w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
+
+	if *debug {
+		log.Printf("sent:\n\t[%s]\n\tnum runes=%d\n\tpAddr=%d\n\teAddr=%d\n\n",
+			msg, utf8.RuneCountInString(msg), w.pAddr, w.eAddr)
+	}
 
 	if t == "\n" {
 		return
