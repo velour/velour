@@ -383,6 +383,9 @@ func handleMsg(msg irc.Msg) {
 	case irc.RPL_TOPIC:
 		doTopic(msg.Args[1], "", lastArg(msg))
 
+	case irc.KICK:
+		doKick(msg.Args[0], msg.Origin, msg.Args[1])
+
 	case irc.TOPIC:
 		doTopic(msg.Args[0], msg.Origin, lastArg(msg))
 
@@ -452,6 +455,17 @@ func doNamReply(ch string, names string) {
 		if n != *nick {
 			doJoin(ch, n)
 		}
+	}
+}
+
+func doKick(ch, op, who string) {
+	w := getWindow(ch)
+	w.writeMsg("=" + op + " kicked " + who)
+	delete(w.users, who)
+	u := getUser(who)
+	u.nChans--
+	if u.nChans == 0 {
+		delete(users, who)
 	}
 }
 
