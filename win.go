@@ -223,7 +223,7 @@ func (w *win) typing(q0, q1 int) {
 		// w.eAddr ≥ w.pAddr so this
 		// call returns in the next if clause.
 	}
-	if q0 < w.eAddr {
+	if q1 < w.eAddr {
 		w.eAddr += q1 - q0
 		return
 	}
@@ -351,7 +351,17 @@ func (w *win) deleting(q0, q1 int) {
 			w.pAddr -= q1 - q0
 		}
 	}
+
 	if q1 <= p {	// Deleted entirely before the prompt
+		return
+	}
+
+	// Don't redraw the prompt if there is more than a single
+	// deleted rune.  The prompt must have been hilighted, and
+	// if the delete was caused by text being entered then the
+	// redraw will muck up the addresses for the subsequent
+	// typing event.
+	if q1 > q0 + 1 {
 		return
 	}
 
