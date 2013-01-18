@@ -76,7 +76,7 @@ func getWin(target string) *win {
 	key := strings.ToLower(target)
 	w, ok := wins[key]
 	if !ok {
-		w = newWindow(target)
+		w = newWin(target)
 		wins[key] = w
 	}
 	return w
@@ -100,7 +100,7 @@ func main() {
 		server = flag.Arg(0)
 	}
 
-	serverWin = newWindow("")
+	serverWin = newWin("")
 	serverWin.Fprintf("tag", "Chat ")
 	// Set Dump handling for the server window.
 	if wd, err := os.Getwd(); err != nil {

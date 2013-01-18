@@ -50,7 +50,7 @@ type winEvent struct {
 	*acme.Event
 }
 
-func newWindow(target string) *win {
+func newWin(target string) *win {
 	aw, err := acme.New()
 	if err != nil {
 		panic("Failed to create window: " + err.Error())
