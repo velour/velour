@@ -59,17 +59,6 @@ var (
 	quitting = false
 )
 
-var users = map[string]*user{}
-
-func getUser(nick string) *user {
-	u, ok := users[nick]
-	if !ok {
-		u = &user{nick: nick, origNick: nick, lastChange: time.Now()}
-		users[nick] = u
-	}
-	return u
-}
-
 var wins = map[string]*win{}
 
 func getWin(target string) *win {
@@ -270,7 +259,7 @@ func handleWindowEvent(ev winEvent) {
 	switch {
 	case ev.C2 == 'x' || ev.C2 == 'X':
 		text := strings.TrimSpace(string(ev.Text))
-		if name, ok := extractName(text); ok {
+		if name, ok := extractName(ev.win, text); ok {
 			ev.writeToPrompt(name + ", ")
 			return
 		}
@@ -310,7 +299,7 @@ func handleWindowEvent(ev winEvent) {
 
 // extractName returns the name and true if the text is a user's name,
 // in either "raw" or <name> format.
-func extractName(text string) (string, bool) {
+func extractName(w *win, text string) (string, bool) {
 	if len(text) == 0 {
 		return "", false
 	}
@@ -318,7 +307,7 @@ func extractName(text string) (string, bool) {
 	if text[0] == '<' && text[len(text)-1] == '>' {
 		name = text[1 : len(text)-1]
 	}
-	return name, users[name] != nil
+	return name, w.users[name] != nil
 }
 
 // HandleExecute handles acme execte commands.
@@ -487,11 +476,6 @@ func doKick(ch, op, who string) {
 	w := getWin(ch)
 	w.writeMsg("=" + op + " kicked " + who)
 	delete(w.users, who)
-	u := getUser(who)
-	u.nChans--
-	if u.nChans == 0 {
-		delete(users, who)
-	}
 }
 
 func doTopic(ch, who, what string) {
@@ -515,9 +499,11 @@ func doJoin(ch, who string) {
 	w := getWin(ch)
 	w.writeMsg("+" + who)
 	if who != *nick {
-		u := getUser(who)
-		w.users[who] = u
-		u.nChans++
+		w.users[who] = &user{
+			nick:      who,
+			origNick:  who,
+			changedAt: time.Now(),
+		}
 	}
 }
 
@@ -531,16 +517,10 @@ func doPart(ch, who string) {
 	} else {
 		w.writeMsg("-" + who)
 		delete(w.users, who)
-		u := getUser(who)
-		u.nChans--
-		if u.nChans == 0 {
-			delete(users, who)
-		}
 	}
 }
 
 func doQuit(who, txt string) {
-	delete(users, who)
 	for _, w := range wins {
 		if _, ok := w.users[who]; !ok {
 			continue
@@ -594,19 +574,14 @@ func doNick(prev, cur string) {
 		return
 	}
 
-	u := users[prev]
-	delete(users, prev)
-	users[cur] = u
-	u.nick = cur
-	u.lastChange = time.Now()
-
 	for _, w := range wins {
-		if _, ok := w.users[prev]; !ok {
-			continue
+		if u, ok := w.users[prev]; ok {
+			delete(w.users, prev)
+			u.changedAt = time.Now()
+			u.nick = cur
+			w.users[cur] = u
+			w.writeMsg("~" + prev + " -> " + cur)
 		}
-		delete(w.users, prev)
-		w.users[cur] = u
-		w.writeMsg("~" + prev + " -> " + cur)
 	}
 }
 

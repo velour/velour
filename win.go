@@ -42,6 +42,12 @@ type win struct {
 	stampTimer  *time.Timer
 }
 
+type user struct {
+	nick      string
+	origNick  string
+	changedAt time.Time
+}
+
 type winEvent struct {
 	// TimeStamp is set to true for time stamp events. If timeStamp is true then Event is nil.
 	timeStamp bool
@@ -85,9 +91,6 @@ func (w *win) del() {
 	if w.stampTimer != nil {
 		w.stampTimer.Stop()
 	}
-	for _, u := range w.users {
-		u.nChans--
-	}
 	delete(wins, strings.ToLower(w.target))
 	w.Ctl("delete")
 }
@@ -130,10 +133,10 @@ func (w *win) privMsgString(who, text string) string {
 		buf.WriteString(who)
 		buf.WriteRune('>')
 
-		if u, ok := users[who]; ok {
+		if u, ok := w.users[who]; ok {
 			// If the user hasn't change their nick in an hour
 			// then set this as the original nick name.
-			if time.Since(u.lastChange).Hours() > 1 {
+			if time.Since(u.changedAt).Hours() > 1 {
 				u.origNick = u.nick
 			}
 			if u.nick != u.origNick {
@@ -342,16 +345,4 @@ func (w *win) deleting(q0, q1 int) {
 	w.Addr("#%d,#%d", w.pAddr, w.eAddr)
 	w.writeData([]byte(prompt))
 	w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
-}
-
-type user struct {
-	nick     string
-	origNick string
-
-	// LastChange is the time at which the user last changed their nick.
-	lastChange time.Time
-
-	// NChans is the reference count on the number of channel windows
-	// containing this same user.
-	nChans int
 }
