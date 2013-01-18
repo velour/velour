@@ -54,7 +54,7 @@ func (m Msg) RawString() (string, error) {
 	if m.Raw != "" {
 		raw = m.Raw
 		goto out
-	}	
+	}
 	if m.Origin != "" {
 		raw += ":" + m.Origin
 		if m.User != "" {
@@ -64,14 +64,14 @@ func (m Msg) RawString() (string, error) {
 	}
 	raw += m.Cmd
 	for i, a := range m.Args {
-		if i == len(m.Args) - 1{
+		if i == len(m.Args)-1 {
 			raw += " :" + a
 		} else {
 			raw += " " + a
 		}
 	}
 out:
-	if len(raw) > MaxMsgLength - len(MsgMarker) {
+	if len(raw) > MaxMsgLength-len(MsgMarker) {
 		return "", fmt.Errorf("message is too long (%d bytes)", len(raw))
 	}
 	return raw, nil
@@ -206,7 +206,7 @@ func readMsgData(in *bufio.Reader) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			return "", MsgTooLong{ Msg: string(msg[:len(msg)-1]), NTrunc: n+1 }
+			return "", MsgTooLong{Msg: string(msg[:len(msg)-1]), NTrunc: n + 1}
 
 		default:
 			msg = append(msg, c)
@@ -232,7 +232,7 @@ func junk(in *bufio.Reader) (int, error) {
 		}
 		last = c
 	}
-	return n-1, nil
+	return n - 1, nil
 }
 
 // unexpected returns an error that describes
@@ -314,7 +314,7 @@ const (
 	RPL_CHANNELMODEIS     = "324"
 	RPL_NOTOPIC           = "331"
 	RPL_TOPIC             = "332"
-	RPL_TOPICWHOTIME = "333"  // ircu specific (not in the RFC)
+	RPL_TOPICWHOTIME      = "333" // ircu specific (not in the RFC)
 	RPL_INVITING          = "341"
 	RPL_SUMMONING         = "342"
 	RPL_INVITELIST        = "346"

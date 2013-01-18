@@ -2,8 +2,8 @@ package irc
 
 import (
 	"bufio"
-	"net"
 	"errors"
+	"net"
 )
 
 // A Client is a client's connection to an IRC server.
@@ -36,9 +36,9 @@ func DialServer(server, nick, fullname, pass string) (*Client, error) {
 	messagesOut := make(chan Msg, 0)
 	errChan := make(chan error)
 	c := &Client{
-		conn: conn,
-		In: messagesIn,
-		Out: messagesOut,
+		conn:   conn,
+		In:     messagesIn,
+		Out:    messagesOut,
 		Errors: errChan,
 	}
 
@@ -56,17 +56,17 @@ func DialServer(server, nick, fullname, pass string) (*Client, error) {
 // register registers a name with the server
 func (c *Client) register(nick, fullname, pass string) error {
 	if pass != "" {
-		c.Out <-Msg{
-			Cmd: "PASS",
+		c.Out <- Msg{
+			Cmd:  "PASS",
 			Args: []string{pass},
 		}
 	}
 	c.Out <- Msg{
-		Cmd: "NICK",
+		Cmd:  "NICK",
 		Args: []string{nick},
 	}
 	c.Out <- Msg{
-		Cmd: "USER",
+		Cmd:  "USER",
 		Args: []string{nick, "0", "*", fullname},
 	}
 	for msg := range c.In {
@@ -149,8 +149,8 @@ func (c *Client) writeMsgs(errs chan<- error, ms <-chan Msg) {
 func (c *Client) muxErrors(rerrs <-chan error, werrs <-chan error, errs chan<- error) {
 	left := 2
 	for {
-		select{
-		case err, ok := <- rerrs:
+		select {
+		case err, ok := <-rerrs:
 			if ok {
 				errs <- err
 				continue
@@ -161,7 +161,7 @@ func (c *Client) muxErrors(rerrs <-chan error, werrs <-chan error, errs chan<- e
 				return
 			}
 
-		case err, ok := <- werrs:
+		case err, ok := <-werrs:
 			if ok {
 				errs <- err
 				continue

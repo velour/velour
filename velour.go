@@ -4,12 +4,12 @@ package main
 import (
 	"code.google.com/p/velour/irc"
 
-	"os/exec"
 	"flag"
 	"io"
-	"net"
 	"log"
+	"net"
 	"os"
+	"os/exec"
 	osuser "os/user"
 	"sort"
 	"strings"
@@ -25,19 +25,19 @@ const (
 	// to delay before reconnecting.  Each failed
 	// reconnection doubles the timout until
 	// a connection is made successfully.
-	initialTimeout = 2*time.Second
+	initialTimeout = 2 * time.Second
 
 	// PingTime is the amount of inactivity time
 	// before sending a ping to the server.
-	pingTime = 120*time.Second
+	pingTime = 120 * time.Second
 )
 
 var (
-	nick  = flag.String("n", username(), "nick name")
-	full  = flag.String("f", name(), "full name")
-	pass  = flag.String("p", "", "password")
-	debug = flag.Bool("d", false, "debugging")
-	util = flag.String("u", "", "utility program")
+	nick   = flag.String("n", username(), "nick name")
+	full   = flag.String("f", name(), "full name")
+	pass   = flag.String("p", "", "password")
+	debug  = flag.Bool("d", false, "debugging")
+	util   = flag.String("u", "", "utility program")
 	filter = flag.String("x", "", "filter program")
 )
 
@@ -143,6 +143,10 @@ func handleConnecting(conn <-chan bool) {
 			return
 
 		case ev := <-winEvents:
+			if ev.timeStamp {
+				continue
+			}
+
 			switch {
 			case ev.C2 == 'x' || ev.C2 == 'X':
 				fs := strings.Fields(string(ev.Text))
@@ -202,7 +206,11 @@ func handleConnection() {
 	for {
 		select {
 		case ev := <-winEvents:
-			handleWindowEvent(ev)
+			if ev.timeStamp {
+				ev.win.printTimeStamp()
+			} else {
+				handleWindowEvent(ev)
+			}
 
 		case msg, ok := <-client.In:
 			if !ok { // disconnect
@@ -212,8 +220,8 @@ func handleConnection() {
 			t = time.NewTimer(pingTime)
 			handleMsg(msg)
 
-		case <- t.C:
-			client.Out <- irc.Msg{Cmd:irc.PING, Args: []string{client.Server}}
+		case <-t.C:
+			client.Out <- irc.Msg{Cmd: irc.PING, Args: []string{client.Server}}
 			t = time.NewTimer(pingTime)
 
 		case err, ok := <-client.Errors:
@@ -253,8 +261,8 @@ func handleWindowEvent(ev winEvent) {
 		if len(fs) > 0 && handleExecute(ev, fs[0], fs[1:]) {
 			return
 		}
-		if ev.Flag & 1 != 0 {	// acme recognized built-in command
-			if ev.Flag & 2 != 0 {
+		if ev.Flag&1 != 0 { // acme recognized built-in command
+			if ev.Flag&2 != 0 {
 				ev.Q0 = ev.OrigQ0
 				ev.Q1 = ev.OrigQ1
 			}
@@ -291,7 +299,7 @@ func extractName(text string) (string, bool) {
 	}
 	name := text
 	if text[0] == '<' && text[len(text)-1] == '>' {
-		name = text[1:len(text)-1]
+		name = text[1 : len(text)-1]
 	}
 	return name, users[name] != nil
 }
@@ -362,7 +370,7 @@ func handleMsg(msg irc.Msg) {
 	switch msg.Cmd {
 	case irc.ERROR:
 		if !quitting {
-			exit(1, "Received error: " + msg.Raw)
+			exit(1, "Received error: "+msg.Raw)
 		}
 
 	case irc.PING:
@@ -642,4 +650,3 @@ func name() string {
 	}
 	return un.Name
 }
-

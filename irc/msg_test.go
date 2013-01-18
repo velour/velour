@@ -11,42 +11,42 @@ import (
 func TestReadMsgOK(t *testing.T) {
 	tests := []Msg{
 		{
-			Raw:       ":e!foo@bar.com JOIN #test54321",
-			Origin:    "e",
-			User:      "foo",
-			Host:      "bar.com",
-			Cmd:   "JOIN",
+			Raw:    ":e!foo@bar.com JOIN #test54321",
+			Origin: "e",
+			User:   "foo",
+			Host:   "bar.com",
+			Cmd:    "JOIN",
+			Args:   []string{"#test54321"},
+		},
+		{
+			Raw:    ":e JOIN #test54321",
+			Origin: "e",
+			Cmd:    "JOIN",
+			Args:   []string{"#test54321"},
+		},
+		{
+			Raw:  "JOIN #test54321",
+			Cmd:  "JOIN",
 			Args: []string{"#test54321"},
 		},
 		{
-			Raw:       ":e JOIN #test54321",
-			Origin:    "e",
-			Cmd:   "JOIN",
-			Args: []string{"#test54321"},
-		},
-		{
-			Raw:       "JOIN #test54321",
-			Cmd:   "JOIN",
-			Args: []string{"#test54321"},
-		},
-		{
-			Raw:       "JOIN #test54321 :foo bar",
-			Cmd:   "JOIN",
+			Raw:  "JOIN #test54321 :foo bar",
+			Cmd:  "JOIN",
 			Args: []string{"#test54321", "foo bar"},
 		},
 		{
-			Raw:       "JOIN #test54321 ::foo bar",
-			Cmd:   "JOIN",
+			Raw:  "JOIN #test54321 ::foo bar",
+			Cmd:  "JOIN",
 			Args: []string{"#test54321", ":foo bar"},
 		},
 		{
-			Raw:       "JOIN    #test54321    foo       bar   ",
-			Cmd:   "JOIN",
+			Raw:  "JOIN    #test54321    foo       bar   ",
+			Cmd:  "JOIN",
 			Args: []string{"#test54321", "foo", "bar"},
 		},
 		{
-			Raw:       "JOIN :",
-			Cmd:   "JOIN",
+			Raw:  "JOIN :",
+			Cmd:  "JOIN",
 			Args: []string{""},
 		},
 	}

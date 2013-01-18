@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"code.google.com/p/velour/irc"
 	"code.google.com/p/goplan9/plan9/acme"
+	"code.google.com/p/velour/irc"
 	"log"
 	"strings"
 	"time"
@@ -18,6 +18,10 @@ const (
 	// MeCmd is the command prefix for sending
 	// CTCP ACTIONs to a channel.
 	meCmd = "/me"
+
+	// StampTimeout is the amount of time before
+	// a time stamp is printed.
+	stampTimeout = 2 * time.Minute
 )
 
 // Win is an open acme windown for either
@@ -56,10 +60,19 @@ type win struct {
 	// LastMsgTime is the time at which the last
 	// private message was sent.
 	lastTime time.Time
+
+	// StampTimer expries when the next time
+	// stamp needs to be added to the window.
+	stampTimer *time.Timer
 }
 
 // WinEvent is an event coming in on a win.
 type winEvent struct {
+
+	// TimeStamp is set to true for time stamp events.
+	// If timeStamp is true then Event is nil.
+	timeStamp bool
+
 	*win
 	*acme.Event
 }
@@ -105,7 +118,7 @@ func newWindow(target string) *win {
 	}
 	go func() {
 		for ev := range aw.EventChan() {
-			winEvents <- winEvent{w, ev}
+			winEvents <- winEvent{false, w, ev}
 		}
 	}()
 	return w
@@ -131,9 +144,8 @@ func (w *win) privMsgString(who, text string) string {
 
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 
-	// Only print the user name if there is a
-	// new speaker or if two minutes has passed.
-	if who != w.lastSpeaker || time.Since(w.lastTime).Minutes() > 2 {
+	// Only print the user name if there is a new speaker or if two minutes has passed.
+	if who != w.lastSpeaker {
 		buf.WriteRune('<')
 		buf.WriteString(who)
 		buf.WriteRune('>')
@@ -154,6 +166,12 @@ func (w *win) privMsgString(who, text string) string {
 	}
 	w.lastSpeaker = who
 	w.lastTime = time.Now()
+	if w.stampTimer != nil {
+		w.stampTimer.Stop()
+	}
+	w.stampTimer = time.AfterFunc(stampTimeout, func() {
+		winEvents <- winEvent{true, w, nil}
+	})
 
 	if who != *nick && strings.Contains(text, *nick) {
 		buf.WriteRune('!')
@@ -161,6 +179,11 @@ func (w *win) privMsgString(who, text string) string {
 	buf.WriteRune('\t')
 	buf.WriteString(text)
 	return buf.String()
+}
+
+func (w *win) printTimeStamp() {
+	w.lastSpeaker = ""
+	w.WriteString(w.lastTime.Format("[15:04:06]"))
 }
 
 // WritePrivMsg writes the private message text
@@ -292,7 +315,7 @@ func (w *win) send(t string) {
 		// here.
 		if len(msg) > 0 && msg[len(msg)-1] != '\n' {
 			msg = msg + "\n"
-		}	
+		}
 	}
 	w.writeData([]byte(msg + prompt))
 
@@ -352,7 +375,7 @@ func (w *win) deleting(q0, q1 int) {
 		}
 	}
 
-	if q1 <= p {	// Deleted entirely before the prompt
+	if q1 <= p { // Deleted entirely before the prompt
 		return
 	}
 
@@ -361,7 +384,7 @@ func (w *win) deleting(q0, q1 int) {
 	// if the delete was caused by text being entered then the
 	// redraw will muck up the addresses for the subsequent
 	// typing event.
-	if q1 > q0 + 1 {
+	if q1 > q0+1 {
 		return
 	}
 
@@ -379,7 +402,7 @@ func (w *win) del() {
 func (w *win) writeToPrompt(text string) {
 	w.Addr("#%d", w.eAddr)
 	w.writeData([]byte(text))
-	w.Addr("#%d", w.eAddr + utf8.RuneCountInString(text))
+	w.Addr("#%d", w.eAddr+utf8.RuneCountInString(text))
 	w.Ctl("dot=addr")
 	w.Addr("#%d", w.pAddr)
 }
