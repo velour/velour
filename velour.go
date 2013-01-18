@@ -33,12 +33,11 @@ const (
 )
 
 var (
-	nick   = flag.String("n", username(), "nick name")
-	full   = flag.String("f", name(), "full name")
-	pass   = flag.String("p", "", "password")
-	debug  = flag.Bool("d", false, "debugging")
-	util   = flag.String("u", "", "utility program")
-	filter = flag.String("x", "", "filter program")
+	nick  = flag.String("n", username(), "nick name")
+	full  = flag.String("f", name(), "full name")
+	pass  = flag.String("p", "", "password")
+	debug = flag.Bool("d", false, "debugging")
+	util  = flag.String("u", "", "utility program")
 )
 
 var (
@@ -539,11 +538,6 @@ func doPrivMsg(ch, who, text string) {
 		ch = who
 	}
 
-	if *filter != "" {
-		text = applyFilter(text)
-
-	}
-
 	if *util != "" {
 		cmd := exec.Command(*util)
 		cmd.Stdin = strings.NewReader(text)
@@ -635,15 +629,4 @@ func name() string {
 		return ""
 	}
 	return un.Name
-}
-
-func applyFilter(text string) string {
-	cmd := exec.Command(*filter)
-	cmd.Stdin = strings.NewReader(text)
-	o, err := cmd.Output()
-	if err != nil {
-		log.Printf("Error running filter (%s): %v\n", *filter, err)
-	}
-
-	return string(o)
 }
