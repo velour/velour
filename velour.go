@@ -51,19 +51,36 @@ var (
 	// serverWin is the server win.
 	serverWin *win
 
-	// wins contains the wins, indexed by their targets.
-	wins = map[string]*win{}
-
 	// winEvents multiplexes all win events.
 	winEvents = make(chan winEvent)
-
-	// users contains all known users.
-	users = map[string]*user{}
 
 	// Quitting is set to true if the user Dels
 	// the server window.
 	quitting = false
 )
+
+var users = map[string]*user{}
+
+func getUser(nick string) *user {
+	u, ok := users[nick]
+	if !ok {
+		u = &user{nick: nick, origNick: nick, lastChange: time.Now()}
+		users[nick] = u
+	}
+	return u
+}
+
+var wins = map[string]*win{}
+
+func getWin(target string) *win {
+	key := strings.ToLower(target)
+	w, ok := wins[key]
+	if !ok {
+		w = newWindow(target)
+		wins[key] = w
+	}
+	return w
+}
 
 func main() {
 	flag.Usage = func() {
@@ -328,7 +345,7 @@ func handleExecute(ev winEvent, cmd string, args []string) bool {
 		if args[0][0] == '#' {
 			client.Out <- irc.Msg{Cmd: irc.JOIN, Args: []string{args[0]}}
 		} else { // private message
-			getWindow(args[0])
+			getWin(args[0])
 		}
 
 	case "Nick":
@@ -449,12 +466,12 @@ func handleMsg(msg irc.Msg) {
 }
 
 func doNoSuchNick(ch, msg string) {
-	getWindow(ch).writeMsg("=ERROR: " + ch + ":" + msg)
+	getWin(ch).writeMsg("=ERROR: " + ch + ":" + msg)
 }
 
 func doNoSuchChannel(ch string) {
 	// Must have PARTed a channel that is not JOINed.
-	getWindow(ch).del()
+	getWin(ch).del()
 }
 
 func doNamReply(ch string, names string) {
@@ -467,7 +484,7 @@ func doNamReply(ch string, names string) {
 }
 
 func doKick(ch, op, who string) {
-	w := getWindow(ch)
+	w := getWin(ch)
 	w.writeMsg("=" + op + " kicked " + who)
 	delete(w.users, who)
 	u := getUser(who)
@@ -478,7 +495,7 @@ func doKick(ch, op, who string) {
 }
 
 func doTopic(ch, who, what string) {
-	w := getWindow(ch)
+	w := getWin(ch)
 	if who == "" {
 		w.writeMsg("=topic: " + what)
 	} else {
@@ -490,12 +507,12 @@ func doMode(ch, mode, who string) {
 	if len(ch) == 0 || ch[0] != '#' {
 		return
 	}
-	w := getWindow(ch)
+	w := getWin(ch)
 	w.writeMsg("=" + who + " mode " + mode)
 }
 
 func doJoin(ch, who string) {
-	w := getWindow(ch)
+	w := getWin(ch)
 	w.writeMsg("+" + who)
 	if who != *nick {
 		u := getUser(who)
@@ -561,7 +578,7 @@ func doPrivMsg(ch, who, text string) {
 		}
 	}
 
-	getWindow(ch).writePrivMsg(who, text)
+	getWin(ch).writePrivMsg(who, text)
 }
 
 func doNotice(ch, who, text string) {
@@ -594,7 +611,7 @@ func doNick(prev, cur string) {
 }
 
 func doWhoReply(ch string, info []string) {
-	w := getWindow(ch)
+	w := getWin(ch)
 	s := info[3]
 	if strings.IndexRune(info[4], '+') >= 0 {
 		s = "+" + s
@@ -607,7 +624,7 @@ func doWhoReply(ch string, info []string) {
 }
 
 func doEndOfWho(ch string) {
-	w := getWindow(ch)
+	w := getWin(ch)
 	sort.Strings(w.who)
 	w.writeMsg("[" + strings.Join(w.who, "] [") + "]")
 	w.who = w.who[:0]
