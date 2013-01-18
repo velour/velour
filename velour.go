@@ -540,7 +540,7 @@ func doPrivMsg(ch, who, text string) {
 	}
 
 	if *filter != "" {
-		cmd := exec.Command(*util)
+		cmd := exec.Command(*filter)
 		cmd.Stdin = strings.NewReader(text)
 		o, err := cmd.Output()
 		if err != nil {
