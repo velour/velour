@@ -81,6 +81,17 @@ func newWindow(target string) *win {
 	return w
 }
 
+func (w *win) del() {
+	if w.stampTimer != nil {
+		w.stampTimer.Stop()
+	}
+	for _, u := range w.users {
+		u.nChans--
+	}
+	delete(wins, strings.ToLower(w.target))
+	w.Ctl("delete")
+}
+
 func (w *win) writeMsg(text string) {
 	w.WriteString(text)
 	w.lastSpeaker = ""
@@ -331,14 +342,6 @@ func (w *win) deleting(q0, q1 int) {
 	w.Addr("#%d,#%d", w.pAddr, w.eAddr)
 	w.writeData([]byte(prompt))
 	w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
-}
-
-func (w *win) del() {
-	if w.stampTimer != nil {
-		w.stampTimer.Stop()
-	}
-	delete(wins, strings.ToLower(w.target))
-	w.Ctl("delete")
 }
 
 type user struct {
