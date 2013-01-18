@@ -540,14 +540,8 @@ func doPrivMsg(ch, who, text string) {
 	}
 
 	if *filter != "" {
-		cmd := exec.Command(*filter)
-		cmd.Stdin = strings.NewReader(text)
-		o, err := cmd.Output()
-		if err != nil {
-			log.Printf("Error running filter (%s): %v\n", *filter, err)
-		}
+		text = applyFilter(text)
 
-		text = string(o)
 	}
 
 	if *util != "" {
@@ -641,4 +635,15 @@ func name() string {
 		return ""
 	}
 	return un.Name
+}
+
+func applyFilter(text string) string {
+	cmd := exec.Command(*filter)
+	cmd.Stdin = strings.NewReader(text)
+	o, err := cmd.Output()
+	if err != nil {
+		log.Printf("Error running filter (%s): %v\n", *filter, err)
+	}
+
+	return string(o)
 }
