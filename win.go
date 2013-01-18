@@ -334,6 +334,9 @@ func (w *win) deleting(q0, q1 int) {
 }
 
 func (w *win) del() {
+	if w.stampTimer != nil {
+		w.stampTimer.Stop()
+	}
 	delete(wins, strings.ToLower(w.target))
 	w.Ctl("delete")
 }
