@@ -98,7 +98,7 @@ func main() {
 		serverWin.Ctl("dump %s", strings.Join(os.Args, " "))
 	}
 
-	for {
+	for i := 0; i < 4; i++ {
 		handleConnecting(connect(server + ":" + port))
 
 		serverWin.WriteString("Connected")
@@ -204,7 +204,7 @@ func handleConnection() {
 			w.Ctl("clean")
 		}
 		for err := range client.Errors {
-			handleError(err)
+			log.Println(err)
 		}
 	}()
 
@@ -230,22 +230,12 @@ func handleConnection() {
 			t = time.NewTimer(pingTime)
 
 		case err, ok := <-client.Errors:
-			if ok {
-				handleError(err)
+			if ok && err != io.EOF {
+				log.Println(err)
+				return
 			}
 		}
 	}
-}
-
-func handleError(err error) {
-	if err == io.EOF {
-		return
-	}
-	if l, ok := err.(irc.MsgTooLong); ok {
-		log.Println(l.Error())
-		return
-	}
-	exit(1, err.Error())
 }
 
 // HandleWindowEvent handles events from
