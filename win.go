@@ -18,7 +18,7 @@ const (
 	meCmd = "/me"
 
 	// StampTimeout is the amount of time before a time stamp is printed.
-	stampTimeout = 2 * time.Minute
+	stampTimeout = 5 * time.Minute
 )
 
 // Win is an open acme windown for either the server, a channel, or a private message.
