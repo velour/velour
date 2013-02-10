@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	nick  = flag.String("n", username(), "nick name")
+	nick  = flag.String("n", username(), "nickname")
 	full  = flag.String("f", name(), "full name")
 	pass  = flag.String("p", "", "password")
 	debug = flag.Bool("d", false, "debugging")
