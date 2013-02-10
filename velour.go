@@ -94,7 +94,8 @@ func main() {
 		serverWin.Ctl("dump %s", strings.Join(os.Args, " "))
 	}
 
-	for i := 0; i < 4; i++ {
+	errors := 0
+	for {
 		handleConnecting(connect(server + ":" + port))
 
 		serverWin.WriteString("Connected")
@@ -105,9 +106,17 @@ func main() {
 			}
 		}
 
+		begin := time.Now()
 		handleConnection()
 
-		if quitting {
+		d := time.Now().Sub(begin)
+		if d < 1*time.Minute {
+			errors++
+		} else {
+			errors = 0
+		}
+
+		if quitting || errors > 4 {
 			break
 		}
 	}
