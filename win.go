@@ -301,10 +301,20 @@ func (w *win) send(t string) {
 			client.Out <- msg
 		}
 	} else {
-		// BUG(eaburns): Long PRIVMSGs should be broken up and sent in pieces.
-		client.Out <- irc.Msg{
-			Cmd:  "PRIVMSG",
-			Args: []string{w.target, t},
+		for len(t) > 0 {
+			m := irc.Msg{
+				Cmd:  "PRIVMSG",
+				Args: []string{w.target, t},
+			}
+			_, err := m.RawString()
+			if err != nil {
+				mtl := err.(irc.MsgTooLong)
+				m.Args[1] = t[:mtl.NTrunc]
+				t = t[mtl.NTrunc:]
+			} else {
+				t = ""
+			}
+			client.Out <- m
 		}
 	}
 	w.Addr("#%d", w.pAddr)
