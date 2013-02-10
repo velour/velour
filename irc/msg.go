@@ -72,7 +72,7 @@ func (m Msg) RawString() (string, error) {
 	}
 out:
 	if len(raw) > MaxMsgLength-len(MsgMarker) {
-		return "", fmt.Errorf("message is too long (%d bytes)", len(raw))
+		return "", MsgTooLong{raw, len(raw) - (MaxMsgLength - len(MsgMarker))}
 	}
 	return raw, nil
 }
