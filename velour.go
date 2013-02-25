@@ -27,6 +27,10 @@ const (
 	// reconnection doubles the timout until
 	// a connection is made successfully.
 	initialTimeout = 2 * time.Second
+
+	// PingTime is the amount of inactive time
+	// to wait before sending a ping to the server.
+	pingTime = 120 * time.Second
 )
 
 var (
@@ -196,7 +200,10 @@ func handleConnecting(conn <-chan bool) {
 // HandleConnection handles events while
 // connected to a server.
 func handleConnection() {
+	t := time.NewTimer(pingTime)
+
 	defer func() {
+		t.Stop()
 		close(client.Out)
 		serverWin.WriteString("Disconnected")
 		serverWin.Ctl("clean")
@@ -224,7 +231,13 @@ func handleConnection() {
 			if !ok { // disconnect
 				return
 			}
+			t.Stop()
+			t = time.NewTimer(pingTime)
 			handleMsg(msg)
+
+		case <-t.C:
+			client.Out <- irc.Msg{Cmd: irc.PING, Args: []string{client.Server}}
+			t = time.NewTimer(pingTime)
 
 		case err, ok := <-client.Errors:
 			if ok && err != io.EOF {
