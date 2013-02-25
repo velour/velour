@@ -381,6 +381,9 @@ func handleMsg(msg irc.Msg) {
 	case irc.PING:
 		client.Out <- irc.Msg{Cmd: irc.PONG}
 
+	case irc.PONG:
+		// OK, ignore
+
 	case irc.ERR_NOSUCHNICK:
 		doNoSuchNick(msg.Args[1], lastArg(msg))
 
