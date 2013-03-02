@@ -216,15 +216,16 @@ func (w *win) typing(q0, q1 int) {
 		}(w.pAddr, w.eAddr)
 	}
 
-	if q0 < w.pAddr {
+	if q0 <= w.pAddr {
 		d("typing before prompt")
 		w.pAddr += q1 - q0
-		// w.pAddr ≤ w.eAddr, will return in next if.
 	}
-
 	if q0 < w.eAddr {
 		d("typing before entry")
 		w.eAddr += q1 - q0
+		return
+	}
+	if q0 <= w.pAddr {
 		return
 	}
 
