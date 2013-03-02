@@ -330,17 +330,6 @@ func (w *win) send(t string) {
 }
 
 func (w *win) deleting(q0, q1 int) {
-	/*
-		if q1 - q0 == 1 {	
-			defer func() {
-				if w.eAddr - w.pAddr < len(prompt) {			
-				        w.Addr("#%d,#%d", w.pAddr, w.eAddr)
-				        w.writeData([]byte(prompt))
-				        w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
-				}
-			}()
-		}
-	*/
 	if *debug {
 		defer func(p, e int) {
 			w.Addr("#%d", w.eAddr)
