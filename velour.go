@@ -161,7 +161,6 @@ func handleConnecting(conn <-chan bool) {
 			if ev.timeStamp {
 				continue
 			}
-
 			switch {
 			case ev.C2 == 'x' || ev.C2 == 'X':
 				fs := strings.Fields(string(ev.Text))
@@ -358,20 +357,6 @@ func handleExecute(ev winEvent, cmd string, args []string) bool {
 
 // HandleMsg handles IRC messages from the server.
 func handleMsg(msg irc.Msg) {
-	if *debug {
-		log.Printf("%#v\n", msg)
-		for k, w := range wins {
-			w.Addr("#%d", w.eAddr)
-			text, err := w.ReadAll("data")
-			if err != nil {
-				panic(err)
-			}
-			log.Printf("%s:\n\t[%s]\n\tpAddr=%d\n\teAddr=%d\n",
-				k, text, w.pAddr, w.eAddr)
-			w.Addr("#%d", w.pAddr)
-		}
-	}
-
 	switch msg.Cmd {
 	case irc.ERROR:
 		if !quitting {
@@ -440,19 +425,6 @@ func handleMsg(msg irc.Msg) {
 	default:
 		cmd := irc.CmdNames[msg.Cmd]
 		serverWin.WriteString("(" + cmd + ") " + msg.Raw)
-	}
-	if *debug {
-		log.Printf("\n\nafter:\n", msg)
-		for k, w := range wins {
-			w.Addr("#%d", w.eAddr)
-			text, err := w.ReadAll("data")
-			if err != nil {
-				panic(err)
-			}
-			log.Printf("%s:\n\t[%s]\n\tpAddr=%d\n\teAddr=%d\n",
-				k, text, w.pAddr, w.eAddr)
-			w.Addr("#%d", w.pAddr)
-		}
 	}
 }
 

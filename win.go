@@ -205,12 +205,25 @@ func (w *win) printTimeStamp() {
 }
 
 func (w *win) typing(q0, q1 int) {
-	if q0 < w.pAddr {
-		w.pAddr += q1 - q0
-		// w.eAddr ≥ w.pAddr so this
-		// call returns in the next if clause.
+	if *debug {
+		defer func(p, e int) {
+			w.Addr("#%d", w.eAddr)
+			text, err := w.ReadAll("data")
+			if err != nil {
+				panic(err)
+			}
+			log.Printf("typing pAddr before: %d, pAddr after: %d, eAddr before: %d, eAddr after: %d [%s]\n", p, w.pAddr, e, w.eAddr, text)
+		}(w.pAddr, w.eAddr)
 	}
-	if q1 < w.eAddr {
+
+	if q0 < w.pAddr {
+		d("typing before prompt")
+		w.pAddr += q1 - q0
+		// w.pAddr ≤ w.eAddr, will return in next if.
+	}
+
+	if q0 < w.eAddr {
+		d("typing before entry")
 		w.eAddr += q1 - q0
 		return
 	}
@@ -223,10 +236,6 @@ func (w *win) typing(q0, q1 int) {
 		panic("Failed to read from window: " + err.Error())
 	}
 
-	if *debug {
-		log.Printf("typing:\n\t[%s]\n\tpAddr=%d\n\teAddr=%d\n\n",
-			text, w.pAddr, w.eAddr)
-	}
 	// If the last character after the prompt isn't a newline then
 	// wait.  This fixes a bug where Send sends two typing
 	// events, the sent text and a new line.  The text won't
@@ -321,38 +330,57 @@ func (w *win) send(t string) {
 }
 
 func (w *win) deleting(q0, q1 int) {
-	p := w.pAddr
+	/*
+		if q1 - q0 == 1 {	
+			defer func() {
+				if w.eAddr - w.pAddr < len(prompt) {			
+				        w.Addr("#%d,#%d", w.pAddr, w.eAddr)
+				        w.writeData([]byte(prompt))
+				        w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
+				}
+			}()
+		}
+	*/
+	if *debug {
+		defer func(p, e int) {
+			w.Addr("#%d", w.eAddr)
+			text, err := w.ReadAll("data")
+			if err != nil {
+				panic(err)
+			}
+			log.Printf("deleting: pAddr before: %d, pAddr after: %d, eAddr before: %d, eAddr after: %d [%s]\n", p, w.pAddr, e, w.eAddr, text)
+		}(w.pAddr, w.eAddr)
+	}
 
-	if q0 >= w.eAddr { // Deleting entirely after the entry point.
+	if q0 > w.eAddr {
+		d("deleting after entry")
 		return
 	}
+
 	if q1 >= w.eAddr {
+		d("deleting over entry\n")
 		w.eAddr = q0
 	} else {
+		d("deleting before entry\n")
 		w.eAddr -= q1 - q0
 	}
-	if q0 < w.pAddr {
-		if q1 >= w.pAddr {
-			w.pAddr = q0
-		} else {
-			w.pAddr -= q1 - q0
-		}
-	}
 
-	if q1 <= p { // Deleted entirely before the prompt
+	if q0 > w.pAddr {
+		d("deleting after prompt")
 		return
 	}
 
-	// Don't redraw the prompt if there is more than a single
-	// deleted rune.  The prompt must have been hilighted, and
-	// if the delete was caused by text being entered then the
-	// redraw will muck up the addresses for the subsequent
-	// typing event.
-	if q1 > q0+1 {
-		return
+	if q1 >= w.pAddr {
+		d("deleting over prompt\n")
+		w.pAddr = q0
+	} else if q0 < w.pAddr {
+		d("deleting before prompt\n")
+		w.pAddr -= q1 - q0
 	}
+}
 
-	w.Addr("#%d,#%d", w.pAddr, w.eAddr)
-	w.writeData([]byte(prompt))
-	w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
+func d(f string, v ...interface{}) {
+	if *debug {
+		log.Printf(f, v...)
+	}
 }
