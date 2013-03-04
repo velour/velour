@@ -213,7 +213,9 @@ func handleConnection() {
 			w.Ctl("clean")
 		}
 		for err := range client.Errors {
-			log.Println(err)
+			if err != io.EOF {
+				log.Println(err)
+			}
 		}
 	}()
 
