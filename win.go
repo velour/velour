@@ -295,6 +295,7 @@ func (w *win) send(t string) {
 
 	w.pAddr += utf8.RuneCountInString(msg)
 	w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
+	defer w.Addr("#%d", w.pAddr)
 
 	if *debug {
 		log.Printf("sent:\n\t[%s]\n\tnum runes=%d\n\tpAddr=%d\n\teAddr=%d\n\n",
@@ -328,7 +329,6 @@ func (w *win) send(t string) {
 			client.Out <- m
 		}
 	}
-	w.Addr("#%d", w.pAddr)
 }
 
 func (w *win) deleting(q0, q1 int) {
