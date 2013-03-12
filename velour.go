@@ -287,7 +287,7 @@ func handleWindowEvent(ev winEvent) {
 		if ev.Flag&2 != 0 { // expansion
 			// The look was on highlighted text.  Instead of
 			// sending the hilighted text, send the original
-			// addresses, so that 3-clicking without draging
+			// addresses, so that 3-clicking without dragging
 			// on selected text doesn't move the cursor
 			// out of the tag.
 			ev.Q0 = ev.OrigQ0
