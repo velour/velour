@@ -212,6 +212,7 @@ func (w *win) typing(q0, q1 int) {
 			if err != nil {
 				panic(err)
 			}
+			w.Addr("#%d", w.pAddr)
 			log.Printf("typing pAddr before: %d, pAddr after: %d, eAddr before: %d, eAddr after: %d [%s]\n", p, w.pAddr, e, w.eAddr, text)
 		}(w.pAddr, w.eAddr)
 	}
