@@ -264,7 +264,7 @@ func handleWindowEvent(ev winEvent) {
 			return
 		}
 		fs := strings.Fields(text)
-		if len(fs) > 0 && handleExecute(ev, fs[0], fs[1:]) {
+		if len(fs) > 1 && handleExecute(ev, fs[0], fs[1:]) {
 			return
 		}
 		if ev.Flag&1 != 0 { // acme recognized built-in command
