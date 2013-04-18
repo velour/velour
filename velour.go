@@ -534,7 +534,7 @@ func doNick(prev, cur string) {
 	if prev == *nick {
 		*nick = cur
 		for _, w := range wins {
-			w.writeMsg("~" + prev + " -> " + cur)
+			w.writeMsg("~" + prev + " → " + cur)
 		}
 		return
 	}
@@ -545,7 +545,7 @@ func doNick(prev, cur string) {
 			u.changedAt = time.Now()
 			u.nick = cur
 			w.users[cur] = u
-			w.writeMsg("~" + prev + " -> " + cur)
+			w.writeMsg("~" + prev + " → " + cur)
 		}
 	}
 }
