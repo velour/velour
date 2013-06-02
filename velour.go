@@ -42,6 +42,7 @@ var (
 	pass  = flag.String("p", "", "password")
 	debug = flag.Bool("d", false, "debugging")
 	util  = flag.String("u", "", "utility program")
+	join  = flag.String("j", "", "automatically join a channel")
 )
 
 var (
@@ -221,6 +222,11 @@ func handleConnection() {
 			}
 		}
 	}()
+
+	if *join != "" {
+		client.Out <- irc.Msg{Cmd: irc.JOIN, Args: []string{*join}}
+		*join = ""
+	}
 
 	for {
 		select {
