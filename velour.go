@@ -31,6 +31,9 @@ const (
 	// PingTime is the amount of inactive time
 	// to wait before sending a ping to the server.
 	pingTime = 120 * time.Second
+
+	// NickServer is the nick name of the nick server.
+	nickServer = "NickServ"
 )
 
 var (
@@ -521,6 +524,14 @@ func doPrivMsg(ch, who, text string) {
 		if err := cmd.Run(); err != nil {
 			log.Printf("Error running util (%s): %v\n", *util, err)
 		}
+	}
+
+	// If this is NickServ, and there is no NickServ window open
+	// then just dump its messages to the server window.
+	l := strings.ToLower(who)
+	if _, ok := wins[l]; !ok && l == strings.ToLower(nickServer) {
+		serverWin.writePrivMsg(who, text)
+		return
 	}
 
 	getWin(ch).writePrivMsg(who, text)
