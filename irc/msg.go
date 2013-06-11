@@ -22,7 +22,7 @@ type Msg struct {
 
 	// User is the user name of the user that
 	// originated the message.
-	// 
+	//
 	// This field is typically set in server to
 	// client communication when the
 	// message originated from a client.
@@ -30,7 +30,7 @@ type Msg struct {
 
 	// Host is the host name of the user that
 	// originated the message.
-	// 
+	//
 	// This field is typically set in server to
 	// client communication when the
 	// message originated from a client.

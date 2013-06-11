@@ -99,8 +99,12 @@ func main() {
 	if wd, err := os.Getwd(); err != nil {
 		log.Println("Failed to set dump working directory: " + err.Error())
 	} else {
+		args := make([]string, 0, len(os.Args))
+		for _, arg := range os.Args {
+			args = append(args, quote(arg))
+		}
 		serverWin.Ctl("dumpdir %s", wd)
-		serverWin.Ctl("dump %s", strings.Join(os.Args, " "))
+		serverWin.Ctl("dump %s", strings.Join(args, " "))
 	}
 
 	errors := 0
@@ -402,7 +406,7 @@ func handleMsg(msg irc.Msg) {
 		doTopic(msg.Args[0], msg.Origin, lastArg(msg))
 
 	case irc.MODE:
-		if len(msg.Args) < 3 { // I dunno what this is, but I bet it's valid.	
+		if len(msg.Args) < 3 { // I dunno what this is, but I bet it's valid.
 			cmd := irc.CmdNames[msg.Cmd]
 			serverWin.WriteString("(" + cmd + ") " + msg.Raw)
 			break
@@ -623,4 +627,18 @@ func name() string {
 		return ""
 	}
 	return un.Name
+}
+
+// quote returns a single-quoted string, with interior
+// quotes quoted as ''.
+func quote(s string) string {
+	r := []byte("'")
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\'' {
+			r = append(r, '\'', '\'')
+		} else {
+			r = append(r, s[i])
+		}
+	}
+	return string(append(r, '\''))
 }
