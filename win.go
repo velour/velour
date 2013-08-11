@@ -217,7 +217,7 @@ func (w *win) typing(q0, q1 int) {
 		}(w.pAddr, w.eAddr)
 	}
 
-	if q0 <= w.pAddr {
+	if q0 < w.pAddr {
 		d("typing before prompt")
 		w.pAddr += q1 - q0
 	}
@@ -226,7 +226,7 @@ func (w *win) typing(q0, q1 int) {
 		w.eAddr += q1 - q0
 		return
 	}
-	if q0 <= w.pAddr {
+	if q0 < w.pAddr {
 		return
 	}
 
@@ -337,7 +337,7 @@ func (w *win) deleting(q0, q1 int) {
 			w.Addr("#%d", w.eAddr)
 			text, err := w.ReadAll("data")
 			if err != nil {
-				panic(err)
+				log.Printf("Entry address (%d) is out of range!", w.eAddr)
 			}
 			w.Addr("#%d", w.pAddr)
 			log.Printf("deleting: pAddr before: %d, pAddr after: %d, eAddr before: %d, eAddr after: %d [%s]\n", p, w.pAddr, e, w.eAddr, text)
