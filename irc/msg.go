@@ -74,7 +74,7 @@ out:
 	if len(raw) > MaxMsgLength-len(MsgMarker) {
 		return "", MsgTooLong{raw, len(raw) - (MaxMsgLength - len(MsgMarker))}
 	}
-	return raw, nil
+	return strings.TrimRight(raw, "\n"), nil
 }
 
 // ParseMsg parses a message from
