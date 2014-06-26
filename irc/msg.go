@@ -183,7 +183,7 @@ func readMsgData(in *bufio.Reader) (string, error) {
 			return "", unexpected("null")
 
 		case c == '\n':
-			return "", unexpected("newline")
+			// Technically an invalid message, but instead we just strip it.
 
 		case c == '\r':
 			c, err = in.ReadByte()
