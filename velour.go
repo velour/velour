@@ -95,7 +95,12 @@ func main() {
 
 	serverWin = newWin("")
 	if !*debug {
-		defer serverWin.del()
+		defer func(){
+			serverWin.del()
+			for _, win := range wins {
+				win.del()
+			}
+		}()
 	}
 	serverWin.Fprintf("tag", "Chat ")
 	// Set Dump handling for the server window.
