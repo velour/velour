@@ -94,6 +94,7 @@ func main() {
 	}
 
 	serverWin = newWin("")
+	defer serverWin.del()
 	serverWin.Fprintf("tag", "Chat ")
 	// Set Dump handling for the server window.
 	if wd, err := os.Getwd(); err != nil {
