@@ -3,8 +3,6 @@
 package main
 
 import (
-	"code.google.com/p/velour/irc"
-
 	"flag"
 	"io"
 	"log"
@@ -15,6 +13,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/velour/velour/irc"
 )
 
 const (
@@ -43,6 +43,7 @@ var (
 	debug = flag.Bool("d", false, "debugging")
 	util  = flag.String("u", "", "utility program")
 	join  = flag.String("j", "", "automatically join a channel")
+	ssl   = flag.Bool("ssl", false, "use SSL to connect to the server")
 )
 
 var (
@@ -95,7 +96,7 @@ func main() {
 
 	serverWin = newWin("")
 	if !*debug {
-		defer func(){
+		defer func() {
 			serverWin.del()
 			for _, win := range wins {
 				win.del()
@@ -152,7 +153,11 @@ func connect(addr string) <-chan bool {
 		timeout := initialTimeout
 		for {
 			var err error
-			client, err = irc.DialServer(addr, *nick, *full, *pass)
+			if *ssl {
+				client, err = irc.DialSSL(addr, *nick, *full, *pass)
+			} else {
+				client, err = irc.Dial(addr, *nick, *full, *pass)
+			}
 			if err == nil {
 				conn <- true
 				return

@@ -2,12 +2,13 @@ package main
 
 import (
 	"bytes"
-	"code.google.com/p/goplan9/plan9/acme"
-	"code.google.com/p/velour/irc"
 	"log"
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"code.google.com/p/goplan9/plan9/acme"
+	"github.com/velour/velour/irc"
 )
 
 const (
