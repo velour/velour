@@ -2,6 +2,7 @@ package irc
 
 import (
 	"bufio"
+	"crypto/tls"
 	"errors"
 	"net"
 )
@@ -25,13 +26,25 @@ type Client struct {
 	Errors <-chan error
 }
 
-// DialServer connects to a remote IRC server.
-func DialServer(server, nick, fullname, pass string) (*Client, error) {
-	conn, err := net.Dial("tcp", server)
+// Dial connects to a remote IRC server.
+func Dial(server, nick, fullname, pass string) (*Client, error) {
+	c, err := net.Dial("tcp", server)
 	if err != nil {
 		return nil, err
 	}
+	return dial(c, nick, fullname, pass)
+}
 
+// DialSSL connects to a remote IRC server using SSL.
+func DialSSL(server, nick, fullname, pass string) (*Client, error) {
+	c, err := tls.Dial("tcp", server, nil)
+	if err != nil {
+		return nil, err
+	}
+	return dial(c, nick, fullname, pass)
+}
+
+func dial(conn net.Conn, nick, fullname, pass string) (*Client, error) {
 	messagesIn := make(chan Msg, 0)
 	messagesOut := make(chan Msg, 0)
 	errChan := make(chan error)
