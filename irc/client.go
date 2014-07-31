@@ -99,7 +99,7 @@ func (c *Client) register(nick, fullname, pass string) error {
 
 		case PING:
 			// Some IRC servers (UnrealIRCd) use PING-based IP
-			// spoofin prevention: they send a PING with some
+			// spoofing prevention: they send a PING with some
 			// junk and  require the client to reply with a PONG
 			// that include the same junk. If the client is an IP
 			// spoofer, they cannot see the PING, and thus cannot
