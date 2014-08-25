@@ -36,8 +36,8 @@ func Dial(server, nick, fullname, pass string) (*Client, error) {
 }
 
 // DialSSL connects to a remote IRC server using SSL.
-func DialSSL(server, nick, fullname, pass string) (*Client, error) {
-	c, err := tls.Dial("tcp", server, &tls.Config{InsecureSkipVerify: true})
+func DialSSL(server, nick, fullname, pass string, trust bool) (*Client, error) {
+	c, err := tls.Dial("tcp", server, &tls.Config{InsecureSkipVerify: trust})
 	if err != nil {
 		return nil, err
 	}
