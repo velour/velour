@@ -44,7 +44,7 @@ var (
 	util  = flag.String("u", "", "utility program")
 	join  = flag.String("j", "", "automatically join a channel")
 	ssl   = flag.Bool("ssl", false, "use SSL to connect to the server")
-	verifySsl = flag.Bool("verify", false, "verify server's SSL certificate")
+	trustSsl = flag.Bool("trust", false, "don't verify server's SSL certificate")
 )
 
 var (
@@ -155,7 +155,7 @@ func connect(addr string) <-chan bool {
 		for {
 			var err error
 			if *ssl {
-				client, err = irc.DialSSL(addr, *nick, *full, *pass, !*verifySsl)
+				client, err = irc.DialSSL(addr, *nick, *full, *pass, *trustSsl)
 			} else {
 				client, err = irc.Dial(addr, *nick, *full, *pass)
 			}
