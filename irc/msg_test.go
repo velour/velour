@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -108,7 +109,7 @@ func TestReadMsgDataOk(t *testing.T) {
 }
 
 func TestReadMsgDataError(t *testing.T) {
-	tooLong := make([]byte, MaxMsgLength)
+	tooLong := make([]byte, MaxMsgLength+2)
 	for i := range tooLong {
 		tooLong[i] = 'a'
 	}
@@ -120,18 +121,17 @@ func TestReadMsgDataError(t *testing.T) {
 	}{
 		{"a", "unexpected end of file in message stream"},
 		{"a\r\r\n", "unexpected carrage return in message stream"},
-		{"\n\r\n", "unexpected newline in message stream"},
 		{"hello there\000\r\n", "unexpected null in message stream"},
-		{string(tooLong), "message is too long"},
+		{string(tooLong), "Message is too long.*"},
 	}
 
 	for _, test := range tests {
 		in := bufio.NewReader(strings.NewReader(test.s))
 		_, err := readMsgData(in)
-		if err == io.EOF {
+		if err == nil {
 			t.Errorf("expected error [%s], got none", test.errStr)
 		}
-		if err != nil && err.Error() != test.errStr {
+		if matched, _ := regexp.MatchString(test.errStr, err.Error()); !matched {
 			t.Errorf("unexpected error [%s], expected [%s]",
 				err, test.errStr)
 		}

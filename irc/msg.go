@@ -202,10 +202,7 @@ func readMsgData(in *bufio.Reader) (string, error) {
 			return string(msg), nil
 
 		case len(msg) >= MaxMsgLength-2:
-			n, err := junk(in)
-			if err != nil {
-				return "", err
-			}
+			n, _ := junk(in)
 			return "", MsgTooLong{Msg: string(msg[:len(msg)-1]), NTrunc: n + 1}
 
 		default:
