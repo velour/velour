@@ -130,8 +130,7 @@ func TestReadMsgDataError(t *testing.T) {
 		_, err := readMsgData(in)
 		if err == nil {
 			t.Errorf("expected error [%s], got none", test.errStr)
-		}
-		if matched, _ := regexp.MatchString(test.errStr, err.Error()); !matched {
+		} else if matched, _ := regexp.MatchString(test.errStr, err.Error()); !matched {
 			t.Errorf("unexpected error [%s], expected [%s]",
 				err, test.errStr)
 		}
