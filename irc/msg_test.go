@@ -109,7 +109,7 @@ func TestReadMsgDataOk(t *testing.T) {
 }
 
 func TestReadMsgDataError(t *testing.T) {
-	tooLong := make([]byte, MaxMsgLength+2)
+	tooLong := make([]byte, MaxMsgLength)
 	for i := range tooLong {
 		tooLong[i] = 'a'
 	}
