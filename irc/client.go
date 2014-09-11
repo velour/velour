@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"net"
+	"time"
 )
 
 // A Client is a client's connection to an IRC server.
@@ -114,6 +115,8 @@ func (c *Client) register(nick, fullname, pass string) error {
 	return errors.New("unexpected end of file")
 }
 
+const deadline = 1 * time.Minute
+
 // readMsgs reads messages from the client and
 // sends them on the message channel.  If an
 // error occurs then it is sent on the errs channel,
@@ -122,6 +125,7 @@ func (c *Client) register(nick, fullname, pass string) error {
 func (c *Client) readMsgs(errs chan<- error, ms chan<- Msg) {
 	in := bufio.NewReader(c.conn)
 	for {
+		c.conn.SetReadDeadline(time.Now().Add(deadline))
 		m, err := readMsg(in)
 		if err != nil {
 			errs <- err
@@ -154,6 +158,7 @@ func (c *Client) writeMsgs(errs chan<- error, ms <-chan Msg) {
 			errs <- err
 			break
 		}
+		c.conn.SetWriteDeadline(time.Now().Add(deadline))
 		if err = out.Flush(); err != nil {
 			errs <- err
 			break
