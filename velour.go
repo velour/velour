@@ -259,8 +259,7 @@ func handleConnection() {
 			if !ok { // disconnect
 				return
 			}
-			t.Stop()
-			t = time.NewTimer(pingTime)
+			t.Reset(pingTime)
 			handleMsg(msg)
 
 		case <-t.C:
