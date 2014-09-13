@@ -155,6 +155,7 @@ const MaxMsgLength = 512
 // in the TCP stream.
 const MsgMarker = "\r\n"
 
+// MsgTooLong is returned as an error for a message that is longer than MaxMsgLength bytes.
 type MsgTooLong struct {
 	// Msg is the truncated message text.
 	Msg string
@@ -209,7 +210,6 @@ func readMsgData(in *bufio.Reader) (string, error) {
 			msg = append(msg, c)
 		}
 	}
-	panic("impossible")
 }
 
 // Junk reads and discards bytes until the next
@@ -426,6 +426,7 @@ const (
 	ERR_USERSDONTMATCH    = "502"
 )
 
+// CmdNames is a map from command strings to their names.
 var CmdNames = map[string]string{
 	PASS:     "PASS",
 	NICK:     "NICK",
