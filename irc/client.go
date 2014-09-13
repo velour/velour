@@ -125,7 +125,6 @@ const deadline = 1 * time.Minute
 func (c *Client) readMsgs(errs chan<- error, ms chan<- Msg) {
 	in := bufio.NewReader(c.conn)
 	for {
-		c.conn.SetReadDeadline(time.Now().Add(deadline))
 		m, err := readMsg(in)
 		if err != nil {
 			errs <- err
