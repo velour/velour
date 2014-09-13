@@ -23,4 +23,5 @@ go test ./... 2>&1 > $o || fail
 
 echo Linting
 golint . \
-	| grep -v underscores
+	| grep -v underscores \
+	|| exit 0
