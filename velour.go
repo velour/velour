@@ -267,9 +267,15 @@ func handleConnection() {
 			t = time.NewTimer(pingTime)
 
 		case err, ok := <-client.Errors:
-			if ok && err != io.EOF {
-				log.Println(err)
-				return
+			if ok {
+				long, il := err.(irc.MsgTooLong)
+				if !il && err != io.EOF {
+					log.Println(err)
+					return
+				}
+				if il {
+					log.Println("Truncated", long.NTrunc, "bytes from message")
+				}
 			}
 		}
 	}
