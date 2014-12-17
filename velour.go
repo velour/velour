@@ -81,6 +81,7 @@ func main() {
 	flag.Usage = func() {
 		os.Stdout.WriteString("usage: velour [options] <server>[:<port>]\n")
 		flag.PrintDefaults()
+		os.Stdout.WriteString("The utility program given by the -u flag will receive a nick as the first argument, and the content of a message on standard input.\n")
 	}
 	flag.Parse()
 	if len(flag.Args()) != 1 {
@@ -548,7 +549,7 @@ func doPrivMsg(ch, who, text string) {
 	}
 
 	if *util != "" {
-		cmd := exec.Command(*util)
+		cmd := exec.Command(*util, who)
 		cmd.Stdin = strings.NewReader(text)
 		if err := cmd.Run(); err != nil {
 			log.Printf("Error running util (%s): %v\n", *util, err)
