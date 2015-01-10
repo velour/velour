@@ -7,7 +7,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"code.google.com/p/goplan9/plan9/acme"
+	"9fans.net/go/acme"
 	"github.com/velour/velour/irc"
 )
 
