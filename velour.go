@@ -643,8 +643,8 @@ func username() string {
 
 func name() string {
 	un, err := osuser.Current()
-	if err != nil {
-		return ""
+	if err != nil || un.Name == "" {
+		return un.Username
 	}
 	return un.Name
 }
