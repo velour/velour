@@ -409,6 +409,26 @@ func handleMsg(msg irc.Msg) {
 	case irc.ERR_NOSUCHCHANNEL:
 		doNoSuchChannel(msg.Args[1])
 
+	case irc.ERR_NOTONCHANNEL:
+		cmd := irc.CmdNames[msg.Cmd]
+		serverWin.WriteString("(" + cmd + ") " + msg.Raw)
+		// We aren't in this channel,
+		// but if we somehow managed to open a window for it
+		// (for example by checking its TOPIC),
+		// we still need to close that window.
+		//
+		// According to RFC1459, ERR_NOTONCHANNEL has one argument: the channel.
+		// However, irc.freenode.net sends <username> <channel>,
+		// so if there are multiple args and the 0th arg is the user name,
+		// close the second argument.
+		if len(msg.Args) > 1 && msg.Args[0] == *nick {
+			if w, ok := wins[strings.ToLower(msg.Args[1])]; ok {
+				w.del()
+			}
+		} else if w, ok := wins[strings.ToLower(msg.Args[0])]; ok {
+			w.del()
+		}
+
 	case irc.RPL_MOTD:
 		serverWin.WriteString(lastArg(msg))
 
