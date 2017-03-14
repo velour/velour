@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 )
 
@@ -116,7 +117,8 @@ func readMsg(in *bufio.Reader) (Msg, error) {
 			if err != nil {
 				return Msg{}, err
 			}
-			return m, long
+			log.Printf("%v", long)
+			return m, nil
 		}
 		return Msg{}, err
 	}
