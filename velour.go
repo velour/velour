@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"9fans.net/go/auth"
+
 	"github.com/velour/velour/irc"
 )
 
@@ -37,6 +39,7 @@ const (
 )
 
 var (
+	factotum = flag.Bool("a", false, "authenticate with factotum")
 	nick     = flag.String("n", username(), "nickname")
 	full     = flag.String("f", name(), "full name")
 	pass     = flag.String("p", "", "password")
@@ -150,6 +153,25 @@ func main() {
 // value true is sent when a connection with
 // the server is successfully established.
 func connect(addr string) <-chan bool {
+	if *factotum {
+		var err error
+		if *nick != "" {
+			_, *pass, err = auth.GetUserPassword(nil,
+				"proto=pass service=irc server=%s user=%s",
+				addr, *nick)
+		} else {
+			_, *pass, err = auth.GetUserPassword(nil,
+				"proto=pass service=irc server=%s", addr)
+		}
+		if err != nil {
+			log.Fatalf("factotum: %v", err)
+		}
+	}
+
+	if *nick == "" {
+		*nick = username()
+	}
+
 	conn := make(chan bool)
 	go func(chan<- bool) {
 		timeout := initialTimeout
