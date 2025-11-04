@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -157,8 +159,15 @@ func (w *win) privMsgString(who, text string) string {
 		winEvents <- winEvent{true, w, nil}
 	})
 
-	if who != *nick && strings.Contains(text, *nick) {
-		buf.WriteRune('!')
+	if who != *nick {
+		re := "(\\W|^)@?"+*nick+"(\\W|$)"
+		match, err := regexp.MatchString(re, text)
+		if err != nil {
+			fmt.Printf("regex [%s] failed: %s", re, err)
+		}
+		if err == nil && match {
+			buf.WriteRune('!')
+		}
 	}
 	buf.WriteRune('\t')
 	buf.WriteString(text)
