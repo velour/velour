@@ -37,14 +37,14 @@ const (
 )
 
 var (
-	nick     = flag.String("n", username(), "nickname")
-	full     = flag.String("f", name(), "full name")
-	pass     = flag.String("p", "", "password")
-	debug    = flag.Bool("d", false, "debugging")
-	util     = flag.String("u", "", "utility program")
-	join     = flag.String("j", "", "automatically join a channel")
-	ssl      = flag.Bool("ssl", false, "use SSL to connect to the server")
-	trustSsl = flag.Bool("trust", false, "don't verify server's SSL certificate")
+	nick       = flag.String("n", username(), "nickname")
+	full       = flag.String("f", name(), "full name")
+	pass       = flag.String("p", "", "password")
+	debug      = flag.Bool("d", false, "debugging")
+	util       = flag.String("u", "", "utility program")
+	join       = flag.String("j", "", "automatically join a channel")
+	ssl        = flag.Bool("ssl", false, "use SSL to connect to the server")
+	trustSsl   = flag.Bool("trust", false, "don't verify server's SSL certificate")
 	bridgeNick = flag.String("bridge", "", "nick name of a chat bridge")
 )
 
@@ -400,7 +400,7 @@ func handleMsg(msg irc.Msg) {
 		}
 
 	case irc.PING:
-		client.Out <- irc.Msg{Cmd: irc.PONG}
+		client.Out <- irc.Msg{Cmd: irc.PONG, Args: msg.Args}
 
 	case irc.PONG:
 		// OK, ignore
@@ -671,7 +671,7 @@ func name() string {
 }
 
 // quote returns a single-quoted string, with interior
-// quotes quoted as ''.
+// quotes quoted as ”.
 func quote(s string) string {
 	r := []byte("'")
 	for i := 0; i < len(s); i++ {
