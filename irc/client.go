@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -25,35 +26,39 @@ type Client struct {
 
 	// Errors is a channel of all read or write errors.
 	Errors <-chan error
+
+	// bridgeNick is the nick of a chat bridge to strip off.
+	bridgeNick string
 }
 
 // Dial connects to a remote IRC server.
-func Dial(server, nick, fullname, pass string) (*Client, error) {
+func Dial(server, nick, fullname, pass, bridgeNick string) (*Client, error) {
 	c, err := net.Dial("tcp", server)
 	if err != nil {
 		return nil, err
 	}
-	return dial(c, nick, fullname, pass)
+	return dial(c, nick, fullname, pass, bridgeNick)
 }
 
 // DialSSL connects to a remote IRC server using SSL.
-func DialSSL(server, nick, fullname, pass string, trust bool) (*Client, error) {
+func DialSSL(server, nick, fullname, pass, bridgeNick string, trust bool) (*Client, error) {
 	c, err := tls.Dial("tcp", server, &tls.Config{InsecureSkipVerify: trust})
 	if err != nil {
 		return nil, err
 	}
-	return dial(c, nick, fullname, pass)
+	return dial(c, nick, fullname, pass, bridgeNick)
 }
 
-func dial(conn net.Conn, nick, fullname, pass string) (*Client, error) {
+func dial(conn net.Conn, nick, fullname, pass, bridgeNick string) (*Client, error) {
 	messagesIn := make(chan Msg, 0)
 	messagesOut := make(chan Msg, 0)
 	errChan := make(chan error)
 	c := &Client{
-		conn:   conn,
-		In:     messagesIn,
-		Out:    messagesOut,
-		Errors: errChan,
+		conn:       conn,
+		In:         messagesIn,
+		Out:        messagesOut,
+		Errors:     errChan,
+		bridgeNick: bridgeNick,
 	}
 
 	readErrs := make(chan error)
@@ -132,11 +137,30 @@ func (c *Client) readMsgs(errs chan<- error, ms chan<- Msg) {
 				break
 			}
 		}
+		if c.bridgeNick != "" && m.Origin == c.bridgeNick && len(m.Args) > 1 &&
+			strings.HasPrefix(m.Args[1], "<") && strings.Contains(m.Args[1], ">") {
+			msg := m.Args[1]
+			closeNick := strings.Index(msg, ">")
+			nick := removeZeroWidthSpaces(msg[1:closeNick])
+			msg = msg[closeNick+1:]
+			m.Origin = nick + " (" + c.bridgeNick + ")"
+			m.Args[1] = msg
+		}
 		ms <- m
 	}
 	close(errs)
 	close(ms)
 	c.conn.Close()
+}
+
+func removeZeroWidthSpaces(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if r != 0x200b /* Zero-width space */ {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 // writeMsgs writes the messages coming in on the
