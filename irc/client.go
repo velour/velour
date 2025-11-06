@@ -137,12 +137,13 @@ func (c *Client) readMsgs(errs chan<- error, ms chan<- Msg) {
 				break
 			}
 		}
+		const nickClose = "> "
 		if c.bridgeNick != "" && m.Origin == c.bridgeNick && len(m.Args) > 1 &&
-			strings.HasPrefix(m.Args[1], "<") && strings.Contains(m.Args[1], ">") {
+			strings.HasPrefix(m.Args[1], "<") && strings.Contains(m.Args[1], nickClose) {
 			msg := m.Args[1]
-			closeNick := strings.Index(msg, ">")
+			closeNick := strings.Index(msg, nickClose)
 			nick := removeZeroWidthSpaces(msg[1:closeNick])
-			msg = msg[closeNick+1:]
+			msg = removeZeroWidthSpaces(msg[closeNick+len(nickClose):])
 			m.Origin = nick + " (" + c.bridgeNick + ")"
 			m.Args[1] = msg
 		}
