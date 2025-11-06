@@ -115,6 +115,7 @@ func (w *win) privMsgString(who, text string) string {
 	if text == "\n" {
 		return ""
 	}
+	d("privMsgString [%s]\n", text)
 
 	if strings.HasPrefix(text, actionPrefix) {
 		text = strings.TrimRight(text[len(actionPrefix):], "\x01")
@@ -128,8 +129,9 @@ func (w *win) privMsgString(who, text string) string {
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 
 	// Only print the user name if there is a new speaker or if two minutes has passed.
+	var sep = '\t'
 	if who != w.lastSpeaker {
-		buf.WriteRune('<')
+		buf.WriteString("\n<")
 		buf.WriteString(who)
 		buf.WriteRune('>')
 
@@ -145,7 +147,7 @@ func (w *win) privMsgString(who, text string) string {
 				buf.WriteRune(')')
 			}
 		}
-		buf.WriteRune('\n')
+		sep = ' ' // only a space after their name.
 	}
 	w.lastSpeaker = who
 	w.lastTime = time.Now()
@@ -166,7 +168,7 @@ func (w *win) privMsgString(who, text string) string {
 			buf.WriteRune('!')
 		}
 	}
-	buf.WriteRune('\t')
+	buf.WriteRune(sep)
 	buf.WriteString(text)
 	return buf.String()
 }
