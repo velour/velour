@@ -199,7 +199,6 @@ func handleConnecting(conn <-chan bool) {
 				// Disallow typing while not connected
 				ev.win.Addr("#%d,#%d", ev.Q0, ev.Q1)
 				ev.win.writeData([]byte{0})
-				ev.win.Addr("#%d", ev.win.pAddr)
 
 			case (ev.C1 == 'M' || ev.C1 == 'K') && ev.C2 == 'D':
 				ev.deleting(ev.Q0, ev.Q1)

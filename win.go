@@ -15,7 +15,10 @@ import (
 
 const (
 	// Prompt is the prompt string written at the beginning of the text entry line.
-	prompt = "\n>"
+	prompt       = "\n>"
+	promptAddr   = "$-/^>/"
+	beforePrompt = promptAddr + "-#0"
+	afterPrompt  = promptAddr + "+#0"
 
 	// MeCmd is the command prefix for sending CTCP ACTIONs to a channel.
 	meCmd = "/me"
@@ -27,11 +30,6 @@ const (
 // Win is an open acme windown for either the server, a channel, or a private message.
 type win struct {
 	*acme.Win
-
-	// PAddr is the address of the empty string just before the prompt.
-	// EAddr is the address of the empty string just after the prompt and before
-	// the user's input.
-	pAddr, eAddr int
 
 	// channel name or nick of chatter for this window.
 	target string
@@ -77,7 +75,6 @@ func newWin(target string) *win {
 
 	w := &win{
 		Win:      aw,
-		eAddr:    utf8.RuneCountInString(prompt),
 		target:   target,
 		users:    make(map[string]*user),
 		lastTime: time.Now(),
@@ -160,7 +157,7 @@ func (w *win) privMsgString(who, text string) string {
 	})
 
 	if who != *nick {
-		re := "(\\W|^)@?"+*nick+"(\\W|$)"
+		re := "(\\W|^)@?" + *nick + "(\\W|$)"
 		match, err := regexp.MatchString(re, text)
 		if err != nil {
 			fmt.Printf("regex [%s] failed: %s", re, err)
@@ -175,22 +172,17 @@ func (w *win) privMsgString(who, text string) string {
 }
 
 func (w *win) writeToPrompt(text string) {
-	w.Addr("#%d", w.eAddr)
+	w.Addr(afterPrompt)
 	w.writeData([]byte(text))
-	w.Addr("#%d", w.eAddr+utf8.RuneCountInString(text))
+	w.Addr("%s+#%d", afterPrompt, utf8.RuneCountInString(text))
 	w.Ctl("dot=addr")
-	w.Addr("#%d", w.pAddr)
 }
 
 // WriteString writes to the window's data file just before the prompt and moves prompt pointers.
 func (w *win) WriteString(str string) {
-	w.Addr("#%d", w.pAddr)
-	data := []byte(str + "\n")
-	w.writeData(data)
-
-	nr := utf8.RuneCount(data)
-	w.pAddr += nr
-	w.eAddr += nr
+	d("write string [%s]\n", str)
+	w.Addr(beforePrompt)
+	w.writeData([]byte(str + "\n"))
 }
 
 // WriteData writes to the window data file, doesn't move the prompt pointers.
@@ -215,34 +207,7 @@ func (w *win) printTimeStamp() {
 }
 
 func (w *win) typing(q0, q1 int) {
-	if *debug {
-		defer func(p, e int) {
-			w.Addr("#%d", w.eAddr)
-			text, err := w.ReadAll("data")
-			if err != nil {
-				panic(err)
-			}
-			w.Addr("#%d", w.pAddr)
-			log.Printf("typing pAddr before: %d, pAddr after: %d, eAddr before: %d, eAddr after: %d [%s]\n", p, w.pAddr, e, w.eAddr, text)
-		}(w.pAddr, w.eAddr)
-	}
-
-	if q0 < w.pAddr {
-		d("typing before prompt")
-		w.pAddr += q1 - q0
-	}
-	if q0 < w.eAddr {
-		d("typing before entry")
-		w.eAddr += q1 - q0
-		return
-	}
-	if q0 < w.pAddr {
-		return
-	}
-
-	defer w.Addr("#%d", w.pAddr)
-
-	w.Addr("#%d", w.eAddr)
+	w.Addr(afterPrompt + ",$")
 	text, err := w.ReadAll("data")
 	if err != nil {
 		panic("Failed to read from window: " + err.Error())
@@ -265,16 +230,15 @@ func (w *win) typing(q0, q1 int) {
 		}
 
 		t := string(text[:i+1])
-		w.Addr("#%d,#%d", w.pAddr, w.eAddr+utf8.RuneCountInString(t))
+		d("line=[%s]\n", t)
+		w.Addr("%s,%s+#%d", beforePrompt, afterPrompt, utf8.RuneCountInString(t))
 		w.send(t)
 		text = text[i+1:]
 	}
 }
 
 func (w *win) send(t string) {
-	if len(t) > 0 && t[len(t)-1] != '\n' {
-		t = t + "\n"
-	}
+	d("sending [%s]\n", t)
 	if strings.HasPrefix(t, meCmd) {
 		act := strings.TrimLeft(t[len(meCmd):], " \t")
 		act = strings.TrimRight(act, "\n")
@@ -301,16 +265,9 @@ func (w *win) send(t string) {
 			msg = msg + "\n"
 		}
 	}
-	w.writeData([]byte(msg + prompt))
 
-	w.pAddr += utf8.RuneCountInString(msg)
-	w.eAddr = w.pAddr + utf8.RuneCountInString(prompt)
-	defer w.Addr("#%d", w.pAddr)
-
-	if *debug {
-		log.Printf("sent:\n\t[%s]\n\tnum runes=%d\n\tpAddr=%d\n\teAddr=%d\n\n",
-			msg, utf8.RuneCountInString(msg), w.pAddr, w.eAddr)
-	}
+	// Remove a trailing newline before writing, since the prompt re-adds one.
+	w.writeData([]byte(strings.TrimRight(msg, "\n") + prompt))
 
 	if t == "\n" {
 		return
@@ -341,43 +298,24 @@ func (w *win) send(t string) {
 	}
 }
 
-func (w *win) deleting(q0, q1 int) {
-	if *debug {
-		defer func(p, e int) {
-			w.Addr("#%d", w.eAddr)
-			text, err := w.ReadAll("data")
-			if err != nil {
-				log.Printf("Entry address (%d) is out of range!", w.eAddr)
-			}
-			w.Addr("#%d", w.pAddr)
-			log.Printf("deleting: pAddr before: %d, pAddr after: %d, eAddr before: %d, eAddr after: %d [%s]\n", p, w.pAddr, e, w.eAddr, text)
-		}(w.pAddr, w.eAddr)
-	}
+func (w *win) deleting(q0, q1 int) { w.establishPrompt() }
 
-	if q0 > w.eAddr {
-		d("deleting after entry")
-		return
+func (w *win) establishPrompt() {
+	w.Addr(promptAddr)
+	q0, q1, err := w.ReadAddr()
+	if err != nil {
+		panic(err)
 	}
-
-	if q1 >= w.eAddr {
-		d("deleting over entry\n")
-		w.eAddr = q0
-	} else {
-		d("deleting before entry\n")
-		w.eAddr -= q1 - q0
-	}
-
-	if q0 > w.pAddr {
-		d("deleting after prompt")
-		return
-	}
-
-	if q1 >= w.pAddr {
-		d("deleting over prompt\n")
-		w.pAddr = q0
-	} else if q0 < w.pAddr {
-		d("deleting before prompt\n")
-		w.pAddr -= q1 - q0
+	d("prompt is at %d, %d\n", q0, q1)
+	if q0 == q1 {
+		// The prompt was deleted. Redraw it.
+		w.Addr("$-/\\n/,$")
+		q0, q1, err := w.ReadAddr()
+		if err != nil {
+			panic(err)
+		}
+		d("establishing prompt at %d, %d\n", q0, q1)
+		w.Fprintf("data", prompt)
 	}
 }
 
